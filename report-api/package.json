@@ -1,0 +1,10 @@
+{
+  "name": "ank-report-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ank Numerology — Name Report PDF + email backend",
+  "dependencies": {
+    "pdfkit": "^0.15.0",
+    "resend": "^4.0.0"
+  }
+}

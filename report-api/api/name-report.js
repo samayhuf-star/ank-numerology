@@ -1,7 +1,8 @@
 // POST /api/name-report  — body: Order { id, email, language, profile{ id,name,day,month,year }, tips, createdAt }
 // Computes the numerology Name Report, renders a PDF, emails it via Resend. Returns 202 when sent.
 const { Resend } = require('resend');
-const { renderPdf } = require('../lib/pdf');
+const { buildHtml } = require('../lib/html');
+const { htmlToPdf } = require('../lib/render');
 const N = require('../lib/numerology');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -24,7 +25,8 @@ module.exports = async (req, res) => {
   if (!process.env.RESEND_API_KEY) return bad(res, 500, 'email not configured');
 
   try {
-    const pdf = await renderPdf(p);
+    const lang = (order.language || 'en').toLowerCase().startsWith('hi') ? 'hi' : 'en';
+    const pdf = await htmlToPdf(buildHtml(p, lang));
     const nameNum = N.chaldeanName(p.name).value;
     const verdict = N.nameReport(p.name, p.day, p.month, p.year).verdict;
     const html = `

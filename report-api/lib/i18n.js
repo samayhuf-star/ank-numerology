@@ -1,6 +1,8 @@
 // UI labels per language + resolver that pairs labels with the right content pack and font.
 const en = require('./content');
 const hi = require('./content_hi');
+const de = require('./content_de');
+const fr = require('./content_fr');
 
 const LABELS = {
   en: {
@@ -117,9 +119,11 @@ const LABELS = {
     footer: (name)=>`अंक न्यूमेरोलॉजी · ${name} के लिए नाम रिपोर्ट`,
     disclaimer: 'यह रिपोर्ट चिंतन और मनोरंजन के लिए तैयार की गई है। अंक-ज्योतिष पेशेवर चिकित्सा, कानूनी या वित्तीय सलाह का विकल्प नहीं है।',
   },
+  de: require('./labels_de'),
+  fr: require('./labels_fr'),
 };
 
-const CONTENT = { en, hi };
+const CONTENT = { en, hi, de, fr };
 
 function resolve(lang) {
   const code = (LABELS[lang] ? lang : 'en');

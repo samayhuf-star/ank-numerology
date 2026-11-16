@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   if (!process.env.RESEND_API_KEY) return bad(res, 500, 'email not configured');
 
   try {
-    const lang = (order.language || 'en').toLowerCase().startsWith('hi') ? 'hi' : 'en';
+    const lang = normalizeLang(order.language);
     const pdf = await htmlToPdf(buildHtml(p, lang));
     const nameNum = N.chaldeanName(p.name).value;
     const verdict = N.nameReport(p.name, p.day, p.month, p.year).verdict;
@@ -57,5 +57,10 @@ module.exports = async (req, res) => {
   }
 };
 
+const SUPPORTED = require('../lib/i18n').LABELS;
+function normalizeLang(raw) {
+  const code = String(raw || 'en').toLowerCase().split(/[-_]/)[0];
+  return SUPPORTED[code] ? code : 'en';
+}
 function slug(s) { return String(s).normalize('NFKD').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'report'; }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }

@@ -5,12 +5,36 @@ const path = require('path');
 const { buildReportData } = require('./report');
 const { resolve } = require('./i18n');
 
-const F = path.join(__dirname, '..', 'node_modules', '@fontsource', 'noto-sans', 'files');
-const b64 = (f) => fs.readFileSync(path.join(F, f)).toString('base64');
-const FONTS = {
-  lat400: b64('noto-sans-latin-400-normal.woff2'), lat700: b64('noto-sans-latin-700-normal.woff2'),
-  dev400: b64('noto-sans-devanagari-400-normal.woff2'), dev700: b64('noto-sans-devanagari-700-normal.woff2'),
+// Script → font registry. To add a language in a new script:
+//   1. npm install @fontsource/<pkg>
+//   2. add an entry here (subset = the fontsource subset name, range = its CSS unicode-range)
+//   3. list the script code in that language's labels `scripts` array (latin is always included)
+const NMOD = path.join(__dirname, '..', 'node_modules', '@fontsource');
+const SCRIPTS = {
+  latin: { pkg: 'noto-sans', subset: 'latin', range: 'U+0000-00FF,U+2000-206F,U+2190-21FF,U+2600-26FF' },
+  deva:  { pkg: 'noto-sans-devanagari', subset: 'devanagari', range: 'U+0900-097F,U+1CD0-1CFF,U+A830-A839' },
+  beng:  { pkg: 'noto-sans-bengali', subset: 'bengali', range: 'U+0980-09FF' },
+  guru:  { pkg: 'noto-sans-gurmukhi', subset: 'gurmukhi', range: 'U+0A00-0A7F' },
+  gujr:  { pkg: 'noto-sans-gujarati', subset: 'gujarati', range: 'U+0A80-0AFF' },
+  orya:  { pkg: 'noto-sans-oriya', subset: 'oriya', range: 'U+0B00-0B7F' },
+  taml:  { pkg: 'noto-sans-tamil', subset: 'tamil', range: 'U+0B80-0BFF' },
+  telu:  { pkg: 'noto-sans-telugu', subset: 'telugu', range: 'U+0C00-0C7F' },
+  knda:  { pkg: 'noto-sans-kannada', subset: 'kannada', range: 'U+0C80-0CFF' },
+  mlym:  { pkg: 'noto-sans-malayalam', subset: 'malayalam', range: 'U+0D00-0D7F' },
+  arab:  { pkg: 'noto-sans-arabic', subset: 'arabic', range: 'U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF' },
+  olck:  { pkg: 'noto-sans-ol-chiki', subset: 'ol-chiki', range: 'U+1C50-1C7F' },
+  mtei:  { pkg: 'noto-sans-meetei-mayek', subset: 'meetei-mayek', range: 'U+AAE0-AAFF,U+ABC0-ABFF' },
 };
+function fontB64(script, weight) {
+  const s = SCRIPTS[script];
+  return fs.readFileSync(path.join(NMOD, s.pkg, 'files', `${s.pkg}-${s.subset}-${weight}-normal.woff2`)).toString('base64');
+}
+function fontFaces(scripts) {
+  const want = ['latin', ...scripts.filter((s) => s !== 'latin')].filter((s, i, a) => SCRIPTS[s] && a.indexOf(s) === i);
+  return want.map((sc) => [400, 700].map((w) =>
+    `@font-face{font-family:'NS';font-weight:${w};src:url(data:font/woff2;base64,${fontB64(sc, w)}) format('woff2');unicode-range:${SCRIPTS[sc].range};}`
+  ).join('\n')).join('\n');
+}
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
 function buildHtml(profile, lang = 'en') {
@@ -67,8 +91,9 @@ function buildHtml(profile, lang = 'en') {
   const page = (inner, cls='') => `<section class="page ${cls}">${inner}</section>`;
 
   // ---- sections ----
+  const brandWordmark = (L.scripts && L.scripts.includes('deva')) ? 'अंक न्यूमेरोलॉजी' : 'ANK NUMEROLOGY';
   const cover = page(`
-    <div class="brand">${esc(L.reportTitle === 'Your Name Report' ? 'ANK NUMEROLOGY' : 'अंक न्यूमेरोलॉजी')}</div>
+    <div class="brand">${esc(brandWordmark)}</div>
     <div class="tagline">${esc(L.tagline)}</div>
     ${wheel()}
     <h1 class="ctitle">${esc(L.reportTitle)}</h1>
@@ -92,8 +117,8 @@ function buildHtml(profile, lang = 'en') {
     barChart([
       { label:L.coreRows[0].split(' ')[0], value:r.mulank, hi:true },
       { label:L.coreRows[1].split(' ')[0], value:r.bhagyank },
-      { label:lang==='hi'?'नाम':'Name', value:r.chaldean.value },
-      { label:lang==='hi'?'जीवन-पथ':'Life', value:r.lifePath },
+      { label:L.coreRows[2].split(' ')[0], value:r.chaldean.value },
+      { label:L.coreRows[3].split(' ')[0], value:r.lifePath },
     ]) +
     `<p class="muted">${esc(L.coreCaption)}</p>`);
 
@@ -179,10 +204,7 @@ function buildHtml(profile, lang = 'en') {
   const pages = [cover, contents, core, mulankPage, bhagyankPage, namePage, loshuPage, numbersPage, forecastPage, luckyPage, remediesPage].join('\n');
 
   return `<!doctype html><html lang="${lang}" dir="${L.dir}"><head><meta charset="utf-8"><style>
-@font-face{font-family:'NS';font-weight:400;src:url(data:font/woff2;base64,${FONTS.lat400}) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF,U+2600-26FF;}
-@font-face{font-family:'NS';font-weight:700;src:url(data:font/woff2;base64,${FONTS.lat700}) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF,U+2600-26FF;}
-@font-face{font-family:'NS';font-weight:400;src:url(data:font/woff2;base64,${FONTS.dev400}) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CFF,U+A830-A839;}
-@font-face{font-family:'NS';font-weight:700;src:url(data:font/woff2;base64,${FONTS.dev700}) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CFF,U+A830-A839;}
+${fontFaces(L.scripts || ['latin'])}
 @page{size:A4;margin:0;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'NS',sans-serif;color:#12142B;-webkit-font-smoothing:antialiased;}

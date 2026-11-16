@@ -1,0 +1,30 @@
+export type Lang = { code: string; native: string; english: string; rtl?: boolean; script: string };
+// 25 launch languages: English, German, French and the 22 scheduled Indian languages.
+export const LANGUAGES: Lang[] = [
+  { code: 'en', native: 'English', english: 'English', script: 'Latin' },
+  { code: 'hi', native: 'हिन्दी', english: 'Hindi', script: 'Devanagari' },
+  { code: 'bn', native: 'বাংলা', english: 'Bengali', script: 'Bengali' },
+  { code: 'ta', native: 'தமிழ்', english: 'Tamil', script: 'Tamil' },
+  { code: 'te', native: 'తెలుగు', english: 'Telugu', script: 'Telugu' },
+  { code: 'mr', native: 'मराठी', english: 'Marathi', script: 'Devanagari' },
+  { code: 'gu', native: 'ગુજરાતી', english: 'Gujarati', script: 'Gujarati' },
+  { code: 'kn', native: 'ಕನ್ನಡ', english: 'Kannada', script: 'Kannada' },
+  { code: 'ml', native: 'മലയാളം', english: 'Malayalam', script: 'Malayalam' },
+  { code: 'pa', native: 'ਪੰਜਾਬੀ', english: 'Punjabi', script: 'Gurmukhi' },
+  { code: 'or', native: 'ଓଡ଼ିଆ', english: 'Odia', script: 'Odia' },
+  { code: 'as', native: 'অসমীয়া', english: 'Assamese', script: 'Bengali' },
+  { code: 'ur', native: 'اردو', english: 'Urdu', rtl: true, script: 'Arabic' },
+  { code: 'ne', native: 'नेपाली', english: 'Nepali', script: 'Devanagari' },
+  { code: 'sa', native: 'संस्कृतम्', english: 'Sanskrit', script: 'Devanagari' },
+  { code: 'kok', native: 'कोंकणी', english: 'Konkani', script: 'Devanagari' },
+  { code: 'mai', native: 'मैथिली', english: 'Maithili', script: 'Devanagari' },
+  { code: 'doi', native: 'डोगरी', english: 'Dogri', script: 'Devanagari' },
+  { code: 'brx', native: 'बड़ो', english: 'Bodo', script: 'Devanagari' },
+  { code: 'ks', native: 'कश्मीरी', english: 'Kashmiri', script: 'Devanagari' },
+  { code: 'sd', native: 'سنڌي', english: 'Sindhi', rtl: true, script: 'Arabic' },
+  { code: 'sat', native: 'ᱥᱟᱱᱛᱟᱲᱤ', english: 'Santali', script: 'Ol Chiki' },
+  { code: 'mni', native: 'ꯃꯩꯇꯩꯂꯣꯟ', english: 'Meitei', script: 'Meetei Mayek' },
+  { code: 'de', native: 'Deutsch', english: 'German', script: 'Latin' },
+  { code: 'fr', native: 'Français', english: 'French', script: 'Latin' },
+];
+export const isRtl = (code: string) => !!LANGUAGES.find((l) => l.code === code)?.rtl;

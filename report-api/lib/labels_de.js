@@ -27,6 +27,7 @@ module.exports = {
   spellNote: 'Eine Namensänderung wirkt am besten, wenn sie sich natürlich sprechen und schreiben lässt. Probiere eine gewählte Schreibweise einige Wochen aus, bevor du sie offiziell machst.',
   loshuIntro: 'Dein Lo-Shu-Raster entsteht aus den Ziffern deines Geburtsdatums. Wo Zahlen sich wiederholen, ist diese Energie stark; wo sie fehlen, liegt eine Lektion.',
   youHave: 'Du hast', missing: 'Fehlend', fullGrid: 'keine — ein seltenes volles Raster', none: 'keine',
+    lineNames: {thinking: 'Denkebene', feeling: 'Gefühlsebene', practical: 'Handlungsebene', planning: 'Planung', willpower: 'Willenskraft', action: 'Aktion', determination: 'Entschlossenheit', intuition: 'Intuition'},
   planesArrows: 'Deine Ebenen und Pfeile', lineHead: ['Linie','Status','Bedeutung'],
   status: { complete:'Vollständig', partial:'Teilweise', empty:'Leer' },
   planeComplete:(m)=>`Eine vollständige ${m}`, planeEmpty:(m)=>`Fehlt — entwickle ${m}`, planePartial:(m)=>`Teils vorhanden — entwickle ${m}`,

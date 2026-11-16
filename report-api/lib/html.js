@@ -150,10 +150,10 @@ function buildHtml(profile, lang = 'en') {
 
   const planeRows = r.lines.filter((l)=>l.kind==='plane').map((l)=>{
     const m = C.PLANES[l.id];
-    return [esc(l.name)+' ', L.status[l.status], esc(l.status==='complete'?L.planeComplete(m):l.status==='empty'?L.planeEmpty(m):L.planePartial(m))];
+    return [esc((L.lineNames&&L.lineNames[l.id])||l.name)+' ', L.status[l.status], esc(l.status==='complete'?L.planeComplete(m):l.status==='empty'?L.planeEmpty(m):L.planePartial(m))];
   });
   const arrowRows = r.lines.filter((l)=>l.kind==='arrow').map((l)=>{
-    return [esc(l.name)+esc(L.arrowSuffix), L.status[l.status], esc(l.status==='complete'?C.ARROWS[l.id]:l.status==='empty'?C.ARROWS_MISSING[l.id]:L.arrowPartial)];
+    return [esc((L.lineNames&&L.lineNames[l.id])||l.name)+esc(L.arrowSuffix), L.status[l.status], esc(l.status==='complete'?C.ARROWS[l.id]:l.status==='empty'?C.ARROWS_MISSING[l.id]:L.arrowPartial)];
   });
   const loshuPage = page(sectionHead(L.kickers.loshu, L.titles.loshu) +
     `<p class="body">${esc(L.loshuIntro)}</p>` +
@@ -203,7 +203,7 @@ function buildHtml(profile, lang = 'en') {
 
   const pages = [cover, contents, core, mulankPage, bhagyankPage, namePage, loshuPage, numbersPage, forecastPage, luckyPage, remediesPage].join('\n');
 
-  return `<!doctype html><html lang="${lang}" dir="${L.dir}"><head><meta charset="utf-8"><style>
+  return `<!doctype html><html lang="${lang}" dir="${L.dir}" data-nl="${(L.scripts||[]).some((x)=>x!=='latin')?1:0}"><head><meta charset="utf-8"><style>
 ${fontFaces(L.scripts || ['latin'])}
 @page{size:A4;margin:0;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -219,7 +219,7 @@ body{font-family:'NS',sans-serif;color:#12142B;-webkit-font-smoothing:antialiase
 .disc{margin:6mm 14mm;font-size:8pt;color:#6B6F8A;font-style:italic;}
 h2{margin:0 14mm 2mm;font-size:13pt;}
 table{width:calc(100% - 28mm);margin:0 14mm 2mm;border-collapse:collapse;font-size:9pt;}
-th{background:#12142B;color:#fff;text-align:left;padding:5px 7px;font-size:9pt;}
+th{background:#12142B;color:#fff;text-align:start;padding:5px 7px;font-size:9pt;}
 td{padding:5px 7px;border-bottom:0.5px solid #E3E4EE;vertical-align:top;line-height:1.4;}
 tbody tr:nth-child(even){background:#F7F7FB;}
 table.kv{font-size:9.5pt;}
@@ -230,7 +230,7 @@ table.kv td{color:#1E2148;}
 .chart .ax{fill:#6B6F8A;font-size:7.5px;text-anchor:middle;}
 .chart .axis{stroke:#E3E4EE;stroke-width:0.75;}
 .loshuRow{display:flex;gap:10mm;margin:0 14mm 3mm;align-items:flex-start;}
-.grid{display:grid;grid-template-columns:repeat(3,16mm);grid-template-rows:repeat(3,16mm);}
+.grid{direction:ltr;display:grid;grid-template-columns:repeat(3,16mm);grid-template-rows:repeat(3,16mm);}
 .cell{border:0.75px solid #E3E4EE;display:flex;align-items:center;justify-content:center;font-size:13pt;font-weight:700;}
 .cell.has{background:#F7F7FB;color:#12142B;}
 .cell.empty{color:#C7C9D8;font-weight:400;}
@@ -245,7 +245,7 @@ table.kv td{color:#1E2148;}
 .cname{color:#E3C766;font-size:15pt;}
 .cdob{color:#9A9FC2;font-size:11pt;margin-top:3px;}
 .cfoot{color:#6B6F8A;font-size:9pt;position:absolute;bottom:18mm;left:0;right:0;}
-html[lang="hi"] .kick,html[lang="hi"] .kick2,html[lang="hi"] .brand{letter-spacing:normal;}
+html[data-nl="1"] .kick,html[data-nl="1"] .kick2,html[data-nl="1"] .brand{letter-spacing:normal;}
 </style></head><body>${pages}</body></html>`;
 }
 

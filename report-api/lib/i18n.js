@@ -33,6 +33,7 @@ const LABELS = {
     spellNote: 'A name change works best when it feels natural to say and write. Try a chosen spelling for a few weeks before making it official.',
     loshuIntro: 'Your Lo Shu grid is built from the digits of your date of birth. Where numbers repeat, that energy is strong; where they are missing, there is a lesson to grow into.',
     youHave: 'You have', missing: 'Missing', fullGrid: 'none — a rare full grid', none: 'none',
+    lineNames: {thinking: 'Thinking plane', feeling: 'Feeling plane', practical: 'Practical plane', planning: 'Planning', willpower: 'Willpower', action: 'Action', determination: 'Determination', intuition: 'Intuition'},
     planesArrows: 'Your planes and arrows', lineHead: ['Line','Status','Meaning'],
     status: { complete:'Complete', partial:'Partial', empty:'Empty' },
     planeComplete:(m)=>`A complete ${m}`, planeEmpty:(m)=>`Missing — grow ${m}`, planePartial:(m)=>`Partly present — developing ${m}`,
@@ -90,6 +91,7 @@ const LABELS = {
     spellNote: 'नाम बदलना तब सबसे अच्छा काम करता है जब वह बोलने और लिखने में स्वाभाविक लगे। आधिकारिक बनाने से पहले कुछ सप्ताह चुनी हुई वर्तनी आज़माएँ।',
     loshuIntro: 'आपकी लो शू ग्रिड आपकी जन्मतिथि के अंकों से बनती है। जहाँ अंक दोहराते हैं, वह ऊर्जा प्रबल है; जहाँ अनुपस्थित हैं, वहाँ विकसित करने योग्य सीख है।',
     youHave: 'आपके पास है', missing: 'अनुपस्थित', fullGrid: 'कोई नहीं — एक दुर्लभ पूर्ण ग्रिड', none: 'कोई नहीं',
+    lineNames: {thinking: 'विचार तल', feeling: 'भावना तल', practical: 'व्यावहारिक तल', planning: 'योजना', willpower: 'इच्छाशक्ति', action: 'कर्म', determination: 'दृढ़ निश्चय', intuition: 'अंतर्ज्ञान'},
     planesArrows: 'आपके तल और तीर', lineHead: ['रेखा','स्थिति','अर्थ'],
     status: { complete:'पूर्ण', partial:'आंशिक', empty:'रिक्त' },
     planeComplete:(m)=>`एक पूर्ण ${m}`, planeEmpty:(m)=>`अनुपस्थित — ${m} विकसित करें`, planePartial:(m)=>`आंशिक रूप से मौजूद — ${m} विकसित हो रहा`,
@@ -124,6 +126,18 @@ const LABELS = {
 };
 
 const CONTENT = { en, hi, de, fr };
+
+// Auto-load drop-in languages: lib/lang/<code>.js exporting { labels, content }
+const fs = require('fs');
+const path = require('path');
+const langDir = path.join(__dirname, 'lang');
+if (fs.existsSync(langDir)) {
+  for (const f of fs.readdirSync(langDir).filter((x) => x.endsWith('.js') && !x.startsWith('_'))) {
+    const code = f.replace(/\.js$/, '');
+    const m = require(path.join(langDir, f));
+    LABELS[code] = m.labels; CONTENT[code] = m.content;
+  }
+}
 
 function resolve(lang) {
   const code = (LABELS[lang] ? lang : 'en');

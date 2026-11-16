@@ -27,6 +27,7 @@ module.exports = {
   spellNote: 'Un changement de nom fonctionne mieux quand il semble naturel à dire et à écrire. Essayez une orthographe choisie pendant quelques semaines avant de l’officialiser.',
   loshuIntro: 'Votre grille Lo Shu se construit à partir des chiffres de votre date de naissance. Là où les nombres se répètent, cette énergie est forte ; là où ils manquent, il y a une leçon à développer.',
   youHave: 'Vous avez', missing: 'Absents', fullGrid: 'aucun — une rare grille complète', none: 'aucun',
+    lineNames: {thinking: 'Plan mental', feeling: 'Plan émotionnel', practical: 'Plan pratique', planning: 'Planification', willpower: 'Volonté', action: 'Action', determination: 'Détermination', intuition: 'Intuition'},
   planesArrows: 'Vos plans et flèches', lineHead: ['Ligne','Statut','Signification'],
   status: { complete:'Complet', partial:'Partiel', empty:'Vide' },
   planeComplete:(m)=>`Un ${m} complet`, planeEmpty:(m)=>`Absent — développez ${m}`, planePartial:(m)=>`Partiellement présent — développez ${m}`,

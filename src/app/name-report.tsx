@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Button, Card, Chip, Eyebrow, Field, H1, P, Screen } from '../components/ui';
 import { useStore, type Order } from '../store';
 import { t } from '../i18n';
-import { LANGUAGES } from '../i18n/languages';
+import { LANGUAGES, REPORT_LANGS } from '../i18n/languages';
 import { buyNameReport } from '../services/purchases';
 import { submitOrder, validEmail } from '../services/reportApi';
 import { CONFIG } from '../config';
@@ -13,8 +13,8 @@ import { View } from 'react-native';
 
 export default function NameReport() {
   const router = useRouter(); const { s, set, active } = useStore();
-  const [step, setStep] = useState<'offer' | 'email' | 'sent'>('offer');
-  const [email, setEmail] = useState(s.email); const [lang, setLang] = useState(s.language);
+  const [step, setStep] = useState<'offer' | 'language' | 'email' | 'sent'>('offer');
+  const [email, setEmail] = useState(s.email); const [lang, setLang] = useState('en'); // report language is chosen before ordering; English by default
   const [tips, setTips] = useState(false); const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
   if (!active) return null;
 
@@ -33,14 +33,23 @@ export default function NameReport() {
 
   if (step === 'offer') return (
     <Screen><Eyebrow>Name Report</Eyebrow><H1>Is your name helping your numbers?</H1>
-      <Card gold>{['Name number worked out step by step', 'Five spelling options with the number each one gives', 'Which spelling adds your missing digits', 'What to change and how to start using it', 'Phone, vehicle and house number check', 'Delivered as a PDF in your language'].map((x) => <P key={x} muted={false}>{`• ${x}`}</P>)}</Card>
+      <Card gold>{['Your past, your present and your next nine years', 'Month-by-month forecast and your best windows ahead', 'Career, money, love and health, with a five-year outlook', 'Name check with spelling options', 'Lucky dates, phone, house and vehicle numbers', '60-page PDF with charts, in the language you choose'].map((x) => <P key={x} muted={false}>{`• ${x}`}</P>)}</Card>
       <Card><P muted={false}>$9.99, once. You also get 5 free checks every day for life.</P></Card>
-      <Button title="Continue · $9.99" onPress={() => setStep('email')} /><Button kind="ghost" title="Not now" onPress={() => router.back()} /></Screen>);
+      <Button title="Choose language · $9.99" onPress={() => setStep('language')} /><Button kind="ghost" title="Not now" onPress={() => router.back()} /></Screen>);
+  if (step === 'language') {
+    const meta = REPORT_LANGS.find((l) => l.code === lang);
+    return (
+      <Screen><H1>Which language should your report be in?</H1><P>You choose before you pay. English is selected by default.</P>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {REPORT_LANGS.map((rl) => { const l = LANGUAGES.find((x) => x.code === rl.code)!; return <Chip key={rl.code} label={rl.beta ? `${l.native} (beta)` : l.native} on={lang === rl.code} onPress={() => setLang(rl.code)} />; })}
+        </View>
+        {meta && !meta.full ? <Card><P muted={false}>{`The full 60-page report is in English for now. ${LANGUAGES.find((l) => l.code === lang)?.english} gets the shorter 12-page edition${meta.beta ? ', and this translation is a beta awaiting native review' : ''}.`}</P></Card> : null}
+        <Button title="Continue" onPress={() => setStep('email')} /><Button kind="ghost" title="Back" onPress={() => setStep('offer')} /></Screen>);
+  }
   if (step === 'email') return (
     <Screen><H1>{t(s.language, 'report.send.title')}</H1><P>{t(s.language, 'report.send.body')}</P>
       <Field label={t(s.language, 'report.email')} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" />
-      <Text style={{ fontFamily: F.sansSemi, fontSize: 13, color: C.muted }}>Name Report language</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{LANGUAGES.map((l) => <Chip key={l.code} label={l.native} on={lang === l.code} onPress={() => setLang(l.code)} />)}</View>
+      <P size={12}>{`Report language: ${LANGUAGES.find((l) => l.code === lang)?.english ?? 'English'}`}</P>
       <Chip label={t(s.language, 'report.tips')} on={tips} onPress={() => setTips(!tips)} />
       <P size={12}>{t(s.language, 'report.privacy')}</P>
       {err ? <Text accessibilityRole="alert" style={{ color: C.warn, fontFamily: F.sans }}>{err}</Text> : null}

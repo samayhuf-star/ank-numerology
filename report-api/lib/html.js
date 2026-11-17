@@ -201,7 +201,25 @@ function buildHtml(profile, lang = 'en') {
     `<p class="body">${esc(L.closing)}</p>` +
     `<p class="disc">${esc(L.disclaimer)}</p>`);
 
-  const pages = [cover, contents, core, mulankPage, bhagyankPage, namePage, loshuPage, numbersPage, forecastPage, luckyPage, remediesPage].join('\n');
+  let pages;
+  if (lang === 'en') {
+    // Full extended report: identity, life areas, past / present / future, practical guidance.
+    const X = require('./extra').buildExtra({ r, C, mk, h: { page, sectionHead, table, kv, barChart, lineChart, esc } });
+    const base = [['Your core numbers', 'Mulank, Bhagyank, name number and life path'], ['Mulank and Bhagyank', 'Your character and your destiny'],
+      ['Your name', 'Letter by letter, with spelling options'], ['Your Lo Shu birth grid', 'Planes, arrows and missing numbers'],
+      ['Your lucky guide', 'Colours, gem, direction and compatibility'], ['Your remedies', 'Affirmations and practices']];
+    const tocRows = base.concat(X.toc);
+    const tocAll = tocRows.map((row, i) => [String(i + 1), esc(row[0]), esc(row[1])]);
+    const tocHead = ['No.', 'Section', 'What it covers'];
+    const split = Math.ceil(tocAll.length / 2);
+    const contentsX = page(sectionHead(L.kickers.contents, L.titles.contents) +
+      `<p class="body">Your report in ${tocRows.length} sections: who you are, your past, your present and your future.</p>` + table(tocHead, tocAll.slice(0, split))) +
+      page(sectionHead(L.kickers.contents, 'Contents, continued') + table(tocHead, tocAll.slice(split)));
+    pages = [cover, contentsX, core, mulankPage, bhagyankPage, ...X.identity, namePage, loshuPage, numbersPage, ...X.afterGrid,
+      ...X.lifeAreas, ...X.timeline, ...X.future, luckyPage, ...X.practical, remediesPage, ...X.closing].join('\n');
+  } else {
+    pages = [cover, contents, core, mulankPage, bhagyankPage, namePage, loshuPage, numbersPage, forecastPage, luckyPage, remediesPage].join('\n');
+  }
 
   return `<!doctype html><html lang="${lang}" dir="${L.dir}" data-nl="${(L.scripts||[]).some((x)=>x!=='latin')?1:0}"><head><meta charset="utf-8"><style>
 ${fontFaces(L.scripts || ['latin'])}

@@ -28,3 +28,16 @@ export const LANGUAGES: Lang[] = [
   { code: 'fr', native: 'Français', english: 'French', script: 'Latin' },
 ];
 export const isRtl = (code: string) => !!LANGUAGES.find((l) => l.code === code)?.rtl;
+
+// Languages the Name Report can actually be produced in (matches report-api/lib/i18n).
+// `full` = the complete 60-page edition. Others get the shorter 12-page edition until translated.
+// `beta` = machine-drafted translation awaiting native review.
+export const REPORT_LANGS: { code: string; beta: boolean; full: boolean }[] = [
+  { code: 'en', beta: false, full: true },
+  { code: 'hi', beta: true, full: false }, { code: 'bn', beta: true, full: false }, { code: 'ta', beta: true, full: false },
+  { code: 'te', beta: true, full: false }, { code: 'mr', beta: true, full: false }, { code: 'gu', beta: true, full: false },
+  { code: 'kn', beta: true, full: false }, { code: 'ml', beta: true, full: false }, { code: 'pa', beta: true, full: false },
+  { code: 'or', beta: true, full: false }, { code: 'as', beta: true, full: false }, { code: 'ur', beta: true, full: false },
+  { code: 'ne', beta: true, full: false }, { code: 'sa', beta: true, full: false },
+  { code: 'de', beta: false, full: false }, { code: 'fr', beta: false, full: false },
+];

@@ -20,7 +20,23 @@ export function initPurchases(appUserId?: string) {
   Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.WARN);
   Purchases.configure({ apiKey, appUserID: appUserId });
   configured = true;
+  // Apple Search Ads attribution, no user prompt needed.
+  if (Platform.OS === 'ios') void Purchases.enableAdServicesAttributionTokenCollection();
   return true;
+}
+
+/** Calls cb whenever RevenueCat reports a change (purchase, renewal, expiry, refund) so the app never shows stale Pro state. */
+export function onEntitlementsChange(cb: (e: { pro: boolean; reportBuyer: boolean }) => void): () => void {
+  if (!configured) return () => {};
+  const listener = (info: CustomerInfo) => cb(entitlementsFrom(info));
+  Purchases.addCustomerInfoUpdateListener(listener);
+  return () => { Purchases.removeCustomerInfoUpdateListener(listener); };
+}
+
+/** RevenueCat Customer Center: manage or cancel, refund requests, support. */
+export async function openCustomerCenter(): Promise<void> {
+  if (!configured) return;
+  try { await RevenueCatUI.presentCustomerCenter(); } catch { /* not available in this build */ }
 }
 
 export const purchasesReady = () => configured;

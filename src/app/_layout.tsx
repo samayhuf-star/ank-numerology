@@ -7,7 +7,7 @@ import { useFonts, Fraunces_700Bold } from '@expo-google-fonts/fraunces';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { I18nManager } from 'react-native';
 import { StoreProvider, useStore } from '../store';
-import { initPurchases, refreshEntitlements } from '../services/purchases';
+import { initPurchases, onEntitlementsChange, refreshEntitlements } from '../services/purchases';
 import { reschedule } from '../services/notifications';
 import { flush } from '../services/reportApi';
 import { daysIndex } from '../engine/cycles';
@@ -35,6 +35,8 @@ function Boot() {
     set((cur) => ({ lastOpenDay: today, startDay: cur.startDay || today }));
     if (initPurchases()) refreshEntitlements().then((e) => { if (e) set((cur) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || cur.ent.reportBuyer } })); }).catch(() => {});
     if (s.pendingOrders.length) flush(s.pendingOrders).then((left) => set({ pendingOrders: left })).catch(() => {});
+    const off = onEntitlementsChange((e) => set((cur) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || cur.ent.reportBuyer } })));
+    return off;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.loaded]);
 

@@ -5,6 +5,7 @@ import { Button, Card, Chip, H1, P, Screen } from '../components/ui';
 import { useStore, resetAll } from '../store';
 import { LANGUAGES } from '../i18n/languages';
 import { requestPermission } from '../services/notifications';
+import { openCustomerCenter } from '../services/purchases';
 import { CONFIG } from '../config';
 import { C, F } from '../theme';
 
@@ -20,6 +21,7 @@ export default function Settings() {
       <Text style={{ fontFamily: F.sansSemi, color: C.muted }}>Language</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{LANGUAGES.map((l) => <Chip key={l.code} label={l.native} on={s.language === l.code} onPress={() => set({ language: l.code })} />)}</View>
       <P size={12}>Right-to-left languages apply fully after you restart the app.</P>
+      {s.ent.pro ? <Button kind="ghost" title="Manage subscription" onPress={() => { void openCustomerCenter(); }} /> : null}
       <Button kind="ghost" title="Restore Purchases" onPress={() => router.push('/paywall')} />
       <Button kind="ghost" title="Privacy Policy" onPress={() => Linking.openURL(CONFIG.privacyUrl)} />
       <Button kind="ghost" title="Terms of Use" onPress={() => Linking.openURL(CONFIG.termsUrl)} />

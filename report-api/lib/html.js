@@ -87,7 +87,13 @@ function buildHtml(profile, lang = 'en') {
     return `<svg viewBox="0 0 260 260" class="wheel">${s}</svg>`;
   };
 
-  const sectionHead = (kicker, title) => `<div class="shead"><div class="kick">${esc(kicker)}</div><h1>${esc(title)}</h1></div>`;
+  // The reader's own Lo Shu square, repeated on every page so the report always feels like theirs.
+  const gridCells = (cls) => [4,9,2,3,5,7,8,1,6].map((d) => {
+    const c = r.counts[d] || 0;
+    return `<div class="${cls} ${c ? 'on' : 'off'}">${c ? String(d).repeat(Math.min(c, 3)) : d}</div>`;
+  }).join('');
+  const miniGrid = `<div class="mini" aria-hidden="true">${gridCells('mc')}</div>`;
+  const sectionHead = (kicker, title) => `<div class="shead"><div class="kick">${esc(kicker)}</div><h1>${esc(title)}</h1>${miniGrid}</div>`;
   const page = (inner, cls='') => `<section class="page ${cls}">${inner}</section>`;
 
   // ---- sections ----
@@ -95,7 +101,8 @@ function buildHtml(profile, lang = 'en') {
   const cover = page(`
     <div class="brand">${esc(brandWordmark)}</div>
     <div class="tagline">${esc(L.tagline)}</div>
-    ${wheel()}
+    <div class="coverGrid">${gridCells('cc')}</div>
+    <div class="coverCap">${esc(L.titles.loshu)}</div>
     <h1 class="ctitle">${esc(L.reportTitle)}</h1>
     <div class="cname">${esc(r.name)}</div>
     <div class="cdob">${esc(L.born)} ${esc(r.dob)}</div>
@@ -230,7 +237,18 @@ body{font-family:'NS',sans-serif;color:#12142B;-webkit-font-smoothing:antialiase
 .page:last-child{page-break-after:auto;}
 .shead{background:#12142B;color:#fff;padding:12mm 14mm 9mm;margin-bottom:8mm;}
 .kick{color:#C9A227;font-weight:700;font-size:8.5pt;letter-spacing:2px;text-transform:uppercase;}
+.shead{position:relative;padding-inline-end:46mm;}
 .shead h1{font-size:19pt;margin-top:4px;font-weight:700;}
+.mini{position:absolute;right:14mm;top:50%;transform:translateY(-50%);direction:ltr;display:grid;grid-template-columns:repeat(3,7.5mm);grid-template-rows:repeat(3,7.5mm);border:0.6px solid rgba(201,162,39,.55);}
+html[dir="rtl"] .mini{right:auto;left:14mm;}
+.mc{border:0.4px solid rgba(201,162,39,.28);display:flex;align-items:center;justify-content:center;font-size:7pt;font-weight:700;letter-spacing:0;}
+.mc.on{color:#E3C766;background:rgba(201,162,39,.12);}
+.mc.off{color:#4B4F7C;font-weight:400;}
+.coverGrid{direction:ltr;display:grid;grid-template-columns:repeat(3,28mm);grid-template-rows:repeat(3,28mm);margin:6mm auto 6mm;width:84mm;border:1px solid #C9A227;}
+.cc{border:0.5px solid rgba(201,162,39,.4);display:flex;align-items:center;justify-content:center;font-size:24pt;font-weight:700;}
+.cc.on{color:#E3C766;background:rgba(201,162,39,.14);}
+.cc.off{color:#4B4F7C;font-weight:400;}
+.coverCap{color:#8A8FB5;font-size:9pt;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12mm;}
 .kick2{color:#C9A227;font-weight:700;font-size:8.5pt;letter-spacing:1.4px;text-transform:uppercase;margin:7mm 14mm 3mm;}
 .body{margin:0 14mm 4mm;font-size:10.5pt;line-height:1.55;}
 .muted{margin:3mm 14mm;font-size:9pt;color:#6B6F8A;line-height:1.5;}

@@ -33,7 +33,7 @@ export default function NameReport() {
 
   if (step === 'offer') return (
     <Screen><Eyebrow>Name Report</Eyebrow><H1>Is your name helping your numbers?</H1>
-      <Card gold>{['Your past, your present and your next nine years', 'Month-by-month forecast and your best windows ahead', 'Career, money, love and health, with a five-year outlook', 'Name check with spelling options', 'Lucky dates, phone, house and vehicle numbers', '60-page PDF with charts, in the language you choose'].map((x) => <P key={x} muted={false}>{`• ${x}`}</P>)}</Card>
+      <Card gold>{['A 29-page Full Future Report that opens in the app: your past, present and next five years', 'Month-by-month forecast and your best windows ahead', 'Career, money, love and health, with a five-year outlook', 'Name check with spelling options', 'Lucky dates, phone, house and vehicle numbers', '60-page PDF with charts, in the language you choose'].map((x) => <P key={x} muted={false}>{`• ${x}`}</P>)}</Card>
       <Card><P muted={false}>$9.99, once. You also get 5 free checks every day for life.</P></Card>
       <Button title="Choose language · $9.99" onPress={() => setStep('language')} /><Button kind="ghost" title="Not now" onPress={() => router.back()} /></Screen>);
   if (step === 'language') {

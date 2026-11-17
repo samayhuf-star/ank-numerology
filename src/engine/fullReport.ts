@@ -14,7 +14,12 @@ export type Block =
   | { k: 'p'; t: string }
   | { k: 'bul'; items: string[] }
   | { k: 'table'; head: string[]; rows: (string | number)[][]; widths?: number[] }
-  | { k: 'stats'; items: { label: string; value: string | number; sub?: string }[] };
+  | { k: 'stats'; items: { label: string; value: string | number; sub?: string }[] }
+  | { k: 'grid'; counts: Record<number, number>; caption?: string }
+  | { k: 'bars'; title?: string; items: { l: string; v: number; sub?: string }[]; max?: number; caption?: string }
+  | { k: 'tiles'; items: { top: string; main: string | number }[]; caption?: string }
+  | { k: 'cal'; title: string; startDow: number; cells: { date: number; pd: number }[]; caption?: string }
+  | { k: 'note'; t: string };
 export type Page = { kicker: string; title: string; blocks: Block[] };
 
 const START_NUMBERS = [1, 3, 5, 8];

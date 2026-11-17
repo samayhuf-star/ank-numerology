@@ -4,10 +4,13 @@ import { working } from './nameMatch.ts';
 import { hook, type Block, type Page } from './fullReport.ts';
 import { MULANK, BHAGYANK, PLANET, DIGIT_MISSING } from '../content/en.ts';
 import { MONTH_NOTE } from '../content/report.ts';
+import { NUM, COMPOUND } from '../content/deep.ts';
+import { monthDays } from './chart.ts';
 import { MONTH_FULL } from './fullReport.ts';
 
 export type FreeCard = Page & { grid?: boolean };
 const sd = (n: number) => String(n).split('').join(' + ');
+const chainTxt = (n: number) => { const o: string[] = []; let x = n; while (x > 9) { const t = String(x).split('').reduce((a, d) => a + Number(d), 0); o.push(`${sd(x)} = ${t}`); x = t; } return o.join(' → '); };
 
 export function buildFreeFlow(b: { name: string; day: number; month: number; year: number }, now: Date): FreeCard[] {
   const r = reading(b, now);
@@ -30,28 +33,39 @@ export function buildFreeFlow(b: { name: string; day: number; month: number; yea
     { k: 'p', t: `Mulank is how you work day to day. Bhagyank is where life is heading. Your name number is the energy you send out each time you use your name.` },
   ]);
   add('Your Mulank', `Mulank ${r.mulank}`, [
-    { k: 'table', head: ['Step', 'Working'], widths: [0.8, 2.4], rows: [['Birth day', `${b.day}`], ['Add the digits', b.day > 9 ? `${sd(b.day)} = ${r.mulank}` : `${b.day} is already one digit`]] },
+    { k: 'table', head: ['Step', 'Working'], widths: [0.8, 2.4], rows: [['Birth day', `${b.day}`], ['Add the digits', b.day > 9 ? chainTxt(b.day) : `${b.day} is already one digit`]] },
     { k: 'p', t: MULANK[r.mulank].short },
-    { k: 'table', head: ['Strengths', 'Watch-outs'], rows: [[MULANK[r.mulank].strengths, MULANK[r.mulank].watch]] },
+    { k: 'p', t: NUM[r.mulank].core[0] },
+    { k: 'table', head: ['Strengths', 'Watch-outs'], rows: NUM[r.mulank].strengths.slice(0, 4).map((x, i) => [x, NUM[r.mulank].challenges[i] ?? '']) },
+    { k: 'table', head: ['Lucky', 'For you'], widths: [1, 2.2], rows: [['Planet', PLANET[r.mulank]], ['Colours', NUM[r.mulank].colours], ['Day', NUM[r.mulank].days], ['Dates', NUM[r.mulank].dates]] },
+    { k: 'p', t: 'The Complete Report goes through your work, money, love and health for this number, one page each.' },
   ]);
   add('Your Bhagyank', `Bhagyank ${r.bhagyank}`, [
-    { k: 'table', head: ['Step', 'Working'], widths: [0.8, 2.4], rows: [['Birth date', `${b.day}/${b.month}/${b.year}`], ['Add every digit', `${digits.join(' + ')} = ${sum}`], ...(sum > 9 ? [['Reduce', `${sd(sum)} = ${r.bhagyank}`]] : [])] },
-    { k: 'p', t: `Your life is moving toward "${BHAGYANK[r.bhagyank].theme.toLowerCase()}". The full report shows how this plays out year by year.` },
+    { k: 'table', head: ['Step', 'Working'], widths: [0.8, 2.4], rows: [['Birth date', `${b.day}/${b.month}/${b.year}`], ['Add every digit', `${digits.join(' + ')} = ${sum}`], ...(sum > 9 ? [['Reduce', chainTxt(sum)]] : [])] },
+    { k: 'p', t: `Your life is moving toward "${BHAGYANK[r.bhagyank].theme.toLowerCase()}". The recurring tension is: ${BHAGYANK[r.bhagyank].tension.toLowerCase()}.` },
+    { k: 'p', t: NUM[r.bhagyank].core[1] },
+    { k: 'table', head: ['Planet', 'Element', 'Nature'], rows: [[PLANET[r.bhagyank], NUM[r.bhagyank].element, NUM[r.bhagyank].nature]] },
+    { k: 'p', t: 'The Complete Report shows how this plays out year by year, and checks it against your Mulank.' },
   ]);
   add('Your name number', `Your name adds up to ${nw.number}`, [
     { k: 'table', head: ['Letter', ...nw.words.flatMap((w) => w.letters.map((l) => l.ch))], rows: [['Value', ...nw.words.flatMap((w) => w.letters.map((l) => l.v))]] },
     { k: 'p', t: `${nw.words.map((w) => `${w.word} = ${w.sub}`).join(', ')}. Total ${nw.total}${nw.steps.length ? `, then ${nw.steps.join(', ')}` : ''}.` },
+    ...(nw.compound && COMPOUND[nw.compound] ? [{ k: 'p', t: `Compound ${nw.compound}, "${COMPOUND[nw.compound].title}": ${COMPOUND[nw.compound].text}` } as Block] : []),
     { k: 'p', t: nw.number === r.mulank || nw.number === r.bhagyank ? `Your name number matches a birth number. The Name Match report shows how well, and tests other spellings.` : `Your name number ${nw.number} does not match your birth numbers ${r.mulank} and ${r.bhagyank}. The Name Match report shows what that means and which spellings would match.` },
   ]);
   add('Your Lo Shu grid', 'Your Lo Shu grid', [
     { k: 'p', t: r.missing.length ? `Missing from your grid: ${r.missing.join(', ')}. ${DIGIT_MISSING[r.missing[0]].pattern}.` : 'Your grid carries every digit from 1 to 9.' },
     { k: 'p', t: `${h.title}. ${h.shown}` },
+    { k: 'bars', title: 'How often each digit appears', items: [1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => ({ l: `${d}`, v: r.counts[d] })), max: Math.max(3, ...Object.values(r.counts)) },
+    { k: 'table', head: ['Missing digit', 'Try this daily'], widths: [1, 2.2], rows: r.missing.slice(0, 3).map((d) => [`${d}: ${DIGIT_MISSING[d].area}`, DIGIT_MISSING[d].practice]) },
   ], true);
   const note = MONTH_NOTE[m0.number];
+  const md = monthDays(b as any, m0.year, m0.month);
   add('This month', `${MONTH_FULL[m0.month - 1]} is a ${m0.number} month`, [
     { k: 'stats', items: [{ label: 'Personal month', value: m0.number }] },
     { k: 'table', head: ['', 'This month'], widths: [0.8, 2.4], rows: [['Mood', note.mood], ['Use it for', note.use]] },
-    { k: 'p', t: 'The other eleven months, what to avoid in each, and your best windows are in the Complete Report.' },
+    { k: 'cal', title: `Your day numbers, ${MONTH_FULL[m0.month - 1]}`, startDow: md.cells[0].dow, cells: md.cells.map((x) => ({ date: x.date, pd: x.pd })), caption: 'Gold boxes (1, 3, 5, 8) are good days to start things.' },
+    { k: 'p', t: 'The other eleven months, each with its own calendar, what to avoid and your best windows are in the Complete Report.' },
   ]);
   return cards;
 }

@@ -5,43 +5,33 @@ import { Button, Card, Eyebrow, H1, LoShuGridView, P, Screen, Table, Tile } from
 import { LockIcon } from '../components/TabIcon';
 import { useStore } from '../store';
 import { reading } from '../engine/reading';
-import { buildReport, type Block } from '../engine/fullReport';
+import { buildComplete } from '../engine/complete';
+import { Blocks, useReportPrice } from '../components/ReportBlocks';
 import { canOpenFullReport } from '../logic/entitlements';
 import { t } from '../i18n';
 import { C, F } from '../theme';
 
-const H2 = ({ children }: { children: string }) => <Text style={{ fontFamily: F.serif, fontSize: 20, color: C.text, marginTop: 6 }}>{children}</Text>;
-
-function Blocks({ blocks }: { blocks: Block[] }) {
-  return <>{blocks.map((b, i) => {
-    if (b.k === 'h') return <H2 key={i}>{b.t}</H2>;
-    if (b.k === 'p') return <P key={i}>{b.t}</P>;
-    if (b.k === 'bul') return <View key={i} style={{ gap: 6 }}>{b.items.map((x) => <P key={x} muted={false}>{`• ${x}`}</P>)}</View>;
-    if (b.k === 'table') return <Table key={i} head={b.head} rows={b.rows} widths={b.widths} />;
-    return <View key={i} style={{ flexDirection: 'row', gap: 10 }}>{b.items.map((s) => <Tile key={s.label} label={s.label} value={s.value} sub={s.sub} />)}</View>;
-  })}</>;
-}
-
-// The full report is paid. Without Ank Pro this screen only shows what is inside and how to unlock it.
+// The Complete Report is paid (one-time, per profile). Without it this screen only shows what is inside and how to unlock it.
 export default function FutureReport() {
   const router = useRouter();
   const { s, active } = useStore();
   const [i, setI] = useState(0);
   const now = useMemo(() => new Date(), []);
-  const unlocked = !!active && canOpenFullReport(s.ent);
-  const pages = useMemo(() => (active && unlocked ? buildReport(active, now) : []), [active, unlocked, now]);
+  const unlocked = !!active && canOpenFullReport(s.paidProfiles, active.id);
+  const pages = useMemo(() => (active && unlocked ? buildComplete(active, now) : []), [active, unlocked, now]);
+  const price = useReportPrice();
   if (!active) return null;
 
   if (!unlocked) {
-    const preview = buildReport(active, now);
+    const preview = buildComplete(active, now);
     return (
       <Screen>
-        <Eyebrow>Full Future Report</Eyebrow>
-        <H1>{`${preview.length} pages about your past, present and future`}</H1>
-        <Card gold><LockIcon /><P muted={false}>Your full report opens with the one-time Full Report or with Ank Pro (monthly or yearly).</P></Card>
+        <Eyebrow>Complete Report</Eyebrow>
+        <H1>{`${preview.length} pages: your name, your numbers and your future`}</H1>
+        <Card gold><LockIcon /><P muted={false}>One payment for this profile opens the whole report. Ank Pro does not include it.</P></Card>
         <Table head={['Inside', 'Pages']} widths={[2.4, 0.6]} rows={[
-          ['Who you are and where life is heading', 4], ['Your Lo Shu grid, strengths, gaps and arrows', 4], ['Your last three years', 1], ['This year in detail', 2], ['Month by month for 12 months', 6], ['Best and careful windows', 1], ['Your next five years, year by year', 5], ['Career, money, love and wellbeing', 5], ['Lucky colours, remedies and a 30-day plan', 2]]} />
-        <Button title="Unlock with Ank Pro, monthly or yearly" onPress={() => router.push('/paywall')} />
+          ['Part 1: your name worked out step by step and matched to your birth numbers', 9], ['Part 2: who you are and where life is heading', 3], ['Your Lo Shu grid, strengths, gaps and arrows', 4], ['Your last three years and this year in detail', 3], ['Month by month for 12 months', 6], ['Best and careful windows', 1], ['Your next five years, year by year', 5], ['Career, money, love and wellbeing', 5], ['Lucky colours, remedies and a 30-day plan', 2]]} />
+        <Button title={`Get the Complete Report · ${price}`} onPress={() => router.push('/name-report')} />
         <Button kind="ghost" title="Back" onPress={() => router.back()} />
       </Screen>);
   }

@@ -28,8 +28,8 @@ test('teaser hook is real text and windows come from the next 12 months', () => 
 });
 test('full report opens only with Pro or a purchase for that profile', () => {
   const none = { pro: false, reportBuyer: false };
-  assert.equal(canOpenFullReport(none), false);
-  assert.equal(canOpenFullReport({ pro: false, reportBuyer: true }), false);
-  assert.equal(canOpenFullReport({ pro: true, reportBuyer: true }), true);
-  assert.equal(canOpenFullReport({ pro: true, reportBuyer: false }), true);
+  assert.equal(canOpenFullReport([], 'a'), false);
+  assert.equal(canOpenFullReport(['b'], 'a'), false);
+  assert.equal(canOpenFullReport(['a'], 'a'), true);
+  assert.equal(canOpenFullReport([], 'a'), false /* Pro does not include the report */);
 });

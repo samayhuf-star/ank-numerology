@@ -15,3 +15,13 @@ test('name match report flags a mismatch and offers matching spellings', () => {
   assert.ok(p.length >= 8);
   assert.ok(JSON.stringify(p).includes('does not match'));
 });
+
+import { buildFreeFlow } from '../src/engine/freeFlow.ts';
+import { buildComplete } from '../src/engine/complete.ts';
+test('free flow has 7 cards and complete report joins both parts', () => {
+  const p = { name: 'Priya Verma', day: 23, month: 11, year: 1992 };
+  assert.equal(buildFreeFlow(p, new Date('2026-11-17')).length, 7);
+  const c = buildComplete(p, new Date('2026-11-17'));
+  assert.ok(c.length > 35);
+  assert.ok(c[1].kicker.startsWith('Part 1') && c[c.length - 1].kicker.startsWith('Part 2'));
+});

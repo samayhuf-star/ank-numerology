@@ -21,7 +21,9 @@ export default function Paywall() {
     try { const e = await restore(); if (e) set((c) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || c.ent.reportBuyer } })); setMsg(e?.pro || e?.reportBuyer ? 'Purchases restored.' : 'No purchases found to restore.'); }
     catch { setMsg('Could not restore. Please try again.'); } finally { setBusy(false); }
   }
-  useEffect(() => { open(); /* eslint-disable-next-line */ }, []);
+  // Open the RevenueCat paywall right after the screen mounts; deferred so state updates are not synchronous in the effect.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { const t = setTimeout(open, 0); return () => clearTimeout(t); }, []);
   return (
     <Screen><H1>Ank Pro</H1><P>Unlimited checks for every profile. $19.99 a year with a 3-day free trial, or $3.99 a month. Cancel any time in your App Store settings.</P>
       {busy ? <ActivityIndicator color={C.gold} /> : null}

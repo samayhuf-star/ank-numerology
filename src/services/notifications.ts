@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance, IosAuthorizationStatus } from 'expo-notifications';
 import { plan, type NudgeContext } from '../engine/nudges.ts';
 import { todayNumber, daysIndex } from '../engine/cycles.ts';
 import { DAY_GOOD, luckyColourShort } from '../content/en.ts';
@@ -14,15 +15,15 @@ const CHANNEL = 'daily';
 
 export async function ensureChannel() {
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(CHANNEL, { name: 'Daily numbers and tips', importance: Notifications.AndroidImportance.DEFAULT });
+    await Notifications.setNotificationChannelAsync(CHANNEL, { name: 'Daily numbers and tips', importance: AndroidImportance.DEFAULT });
   }
 }
 export async function requestPermission(): Promise<boolean> {
   await ensureChannel();
   const cur = await Notifications.getPermissionsAsync();
-  if (cur.granted || cur.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED) return true;
+  if (cur.granted || cur.ios?.status === IosAuthorizationStatus.AUTHORIZED) return true;
   const r = await Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowBadge: false, allowSound: true } });
-  return r.granted || r.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED;
+  return r.granted || r.ios?.status === IosAuthorizationStatus.AUTHORIZED;
 }
 
 const parseTime = (hhmm: string) => { const [h, m] = hhmm.split(':').map((x) => parseInt(x, 10)); return { h: isFinite(h) ? h : 8, m: isFinite(m) ? m : 0 }; };

@@ -22,13 +22,13 @@ function Blocks({ blocks }: { blocks: Block[] }) {
   })}</>;
 }
 
-// The full report is paid. Without Pro or the one-time purchase this screen only shows what is inside and how to unlock it.
+// The full report is paid. Without Ank Pro this screen only shows what is inside and how to unlock it.
 export default function FutureReport() {
   const router = useRouter();
   const { s, active } = useStore();
   const [i, setI] = useState(0);
   const now = useMemo(() => new Date(), []);
-  const unlocked = !!active && canOpenFullReport(s.ent, s.paidProfiles, active.id);
+  const unlocked = !!active && canOpenFullReport(s.ent);
   const pages = useMemo(() => (active && unlocked ? buildReport(active, now) : []), [active, unlocked, now]);
   if (!active) return null;
 
@@ -41,8 +41,7 @@ export default function FutureReport() {
         <Card gold><LockIcon /><P muted={false}>Your full report opens with the one-time Full Report or with Ank Pro (monthly or yearly).</P></Card>
         <Table head={['Inside', 'Pages']} widths={[2.4, 0.6]} rows={[
           ['Who you are and where life is heading', 4], ['Your Lo Shu grid, strengths, gaps and arrows', 4], ['Your last three years', 1], ['This year in detail', 2], ['Month by month for 12 months', 6], ['Best and careful windows', 1], ['Your next five years, year by year', 5], ['Career, money, love and wellbeing', 5], ['Lucky colours, remedies and a 30-day plan', 2]]} />
-        <Button title="Unlock the full report · $9.99" onPress={() => router.push('/name-report')} />
-        <Button kind="ghost" title="Or get Ank Pro, monthly or yearly" onPress={() => router.push('/paywall')} />
+        <Button title="Unlock with Ank Pro, monthly or yearly" onPress={() => router.push('/paywall')} />
         <Button kind="ghost" title="Back" onPress={() => router.back()} />
       </Screen>);
   }

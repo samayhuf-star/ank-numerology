@@ -14,7 +14,7 @@ export default function Forecast() {
   const router = useRouter();
   const { s, active } = useStore();
   if (!active) return null;
-  const open = canOpenFullReport(s.ent, s.paidProfiles, active.id);
+  const open = canOpenFullReport(s.ent);
   const shown = open ? r12(active) : r12(active).slice(0, 3);
   return (
     <Screen>
@@ -27,7 +27,7 @@ export default function Forecast() {
             <Text style={{ color: C.muted, fontFamily: F.sans, fontSize: 9 }}>{MONTHS[p.month - 1]}</Text></View>))}
       </View>
       <Table head={['Month', 'No.', 'Theme']} widths={[1, 0.6, 2]} rows={shown.map((p) => [`${MONTHS[p.month - 1]} ${p.year}`, p.number, YEAR_THEME[p.number].name])} />
-      {!open ? <Card gold><P muted={false}>The other nine months, with what each one means for you, are in your full report.</P><Button title="Unlock the full report · $9.99" onPress={() => router.push('/name-report')} /><Button kind="ghost" title="Or get Ank Pro" onPress={() => router.push('/paywall')} /></Card> : null}
+      {!open ? <Card gold><P muted={false}>The other nine months, with what each one means for you, are in your full report.</P><Button title="Unlock with Ank Pro" onPress={() => router.push('/paywall')} /></Card> : null}
       <P size={13}>Month numbers follow your Personal Year. They are prompts for reflection, not predictions.</P>
     </Screen>
   );

@@ -20,7 +20,7 @@ export default function Result() {
   const th = YEAR_THEME[r.personalYear];
   const h = hook(active, now);
   const w = windows(r.months);
-  const open = canOpenFullReport(s.ent, s.paidProfiles, active.id);
+  const open = canOpenFullReport(s.ent);
   return (
     <Screen>
       <Eyebrow>Your free reading</Eyebrow>
@@ -50,8 +50,8 @@ export default function Result() {
       </Card>
       <View style={{ flex: 1 }} />
       {open ? <Button title="Open my full future report" onPress={() => router.push('/future-report')} /> : <>
-        <Button title="Unlock the full report · $9.99" onPress={() => router.push('/name-report')} />
-        <Button kind="ghost" title="Or get Ank Pro, monthly or yearly" onPress={() => router.push('/paywall')} />
+        <Button title="Unlock the full report with Ank Pro" onPress={() => router.push('/paywall')} />
+        <Button kind="ghost" title="Name Match report · $9.99" onPress={() => router.push('/name-report')} />
         <P size={12}>29 pages on your past, present and next five years, with a month-by-month forecast.</P></>}
       <Button kind="ghost" title="Go to the app" onPress={() => router.replace('/(tabs)/today')} />
     </Screen>

@@ -39,6 +39,5 @@ export function recordCheck(e: Entitlements, usage: Usage, day: number): Usage {
 /** The Name Report is bought per profile. Pro does not include it (assumption, confirm with Samay). */
 export const canOpenNameReport = (paidProfileIds: string[], profileId: string) => paidProfileIds.includes(profileId);
 
-/** The 29-page Full Future Report opens with a Pro subscription (any profile) or the one-time purchase (that profile). */
-export const canOpenFullReport = (e: Entitlements, paidProfileIds: string[], profileId: string) =>
-  e.pro || paidProfileIds.includes(profileId);
+/** The 29-page Full Future Report opens with Ank Pro only. The $9.99 purchase unlocks the Name Match report, not this one. */
+export const canOpenFullReport = (e: Entitlements) => e.pro;

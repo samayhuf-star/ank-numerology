@@ -1,43 +1,55 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, Card, Eyebrow, H1, P, Screen, Tile } from '../components/ui';
-import { LockIcon } from '../components/TabIcon';
+import { Button, Card, Eyebrow, H1, LoShuGridView, P, Screen } from '../components/ui';
+import { Blocks, PitchStrip, useReportPrice } from '../components/ReportBlocks';
 import { useStore } from '../store';
 import { reading } from '../engine/reading';
-import { YEAR_THEME, MONTHS } from '../content/en';
+import { buildFreeFlow } from '../engine/freeFlow';
+import { canOpenFullReport } from '../logic/entitlements';
 import { C, F } from '../theme';
 
+// The free reading is a short guided flow: one idea per card, the working shown, and a pitch under each card.
+// The last card is the offer. Paid users go straight to their Complete Report.
 export default function Result() {
   const router = useRouter();
   const { s, active } = useStore();
+  const [i, setI] = useState(0);
+  const now = useMemo(() => new Date(), []);
+  const price = useReportPrice();
   if (!active) return null;
-  const r = reading(active, new Date());
-  const th = YEAR_THEME[r.personalYear];
-  const nextYear = r.years[1];
-  const paid = s.paidProfiles.includes(active.id);
+  const cards = buildFreeFlow(active, now);
+  const open = canOpenFullReport(s.paidProfiles, active.id);
+  const last = cards.length; // index of the offer card
+  const r = reading(active, now);
+  const unlock = () => router.push('/name-report');
+
+  if (i === last) return (
+    <Screen>
+      <Eyebrow>Your Complete Report</Eyebrow>
+      <H1>{`${active.name.split(' ')[0]}, your full report is ready`}</H1>
+      <Card gold>
+        {['Part 1: your name worked out letter by letter and matched against your birth numbers, with spelling options', 'Part 2: your past, this year, each month, the next five years, career, money, love and health', 'A 30-day action plan and lucky dates', 'Opens in the app and can be emailed as a PDF in your language'].map((x) => <P key={x} muted={false}>{`\u2022 ${x}`}</P>)}
+      </Card>
+      <Card><Text style={{ fontFamily: F.serif, fontSize: 30, color: C.gold }}>{price}</Text><P size={13}>One payment for this profile. No subscription.</P></Card>
+      {open ? <Button title="Open my Complete Report" onPress={() => router.push('/future-report')} /> : <Button title={`Get the Complete Report · ${price}`} onPress={unlock} />}
+      <Button kind="ghost" title="Back" onPress={() => setI(i - 1)} />
+      <Button kind="ghost" title="Go to the app" onPress={() => router.replace('/(tabs)/today')} />
+    </Screen>);
+
+  const c = cards[i];
   return (
     <Screen>
-      <Eyebrow>Your free future reading</Eyebrow>
-      <H1>{`${active.name.split(' ')[0]}, your future in numbers`}</H1>
+      <View style={{ height: 4, backgroundColor: C.soft, borderRadius: 2 }}><View style={{ height: 4, width: `${((i + 1) / (cards.length + 1)) * 100}%`, backgroundColor: C.gold, borderRadius: 2 }} /></View>
+      <Eyebrow>{c.kicker}</Eyebrow>
+      <H1>{c.title}</H1>
+      <Blocks blocks={c.blocks} />
+      {c.grid ? <Card><View style={{ alignItems: 'center' }}><LoShuGridView counts={r.counts} size={54} /></View></Card> : null}
+      {!open && i > 1 ? <PitchStrip onPress={unlock} /> : null}
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Tile label="Mulank" value={r.mulank} /><Tile label="Bhagyank" value={r.bhagyank} /><Tile label={`Year ${new Date().getFullYear()}`} value={r.personalYear} />
+        <View style={{ flex: 1 }}><Button kind="ghost" title="Back" disabled={i === 0} onPress={() => setI(i - 1)} /></View>
+        <View style={{ flex: 1 }}><Button title="Next" onPress={() => setI(i + 1)} /></View>
       </View>
-      <Card><Text style={{ fontFamily: F.sansSemi, color: C.text, fontSize: 15 }}>{`${new Date().getFullYear()} is a Year ${r.personalYear}: ${th.name.toLowerCase()}`}</Text>
-        <P size={14}>{`${th.focus}. ${nextYear ? `Next year, ${nextYear.year}, is a Year ${nextYear.number}: ${YEAR_THEME[nextYear.number].name.toLowerCase()}.` : ''}`}</P></Card>
-      <Card><Text style={{ fontFamily: F.sansSemi, color: C.text, fontSize: 15 }}>Your next three months</Text>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          {r.months.slice(0, 3).map((p) => (
-            <View key={`${p.year}-${p.month}`} style={{ flex: 1, backgroundColor: C.bg, borderColor: C.border, borderWidth: 1, borderRadius: 12, padding: 10, alignItems: 'center' }}>
-              <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.muted }}>{MONTHS[p.month - 1]}</Text>
-              <Text style={{ fontFamily: F.serif, fontSize: 28, color: C.gold }}>{p.number}</Text></View>))}
-        </View></Card>
-      {!paid && <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={{ flex: 1 }}><Text style={{ fontFamily: F.sansSemi, color: C.text, fontSize: 15 }}>Name Report</Text><P size={13}>Name analysis, name check, what to change</P></View><LockIcon /></Card>}
-      <View style={{ flex: 1 }} />
-      <Button title="Read my full future report · free" onPress={() => router.push('/future-report')} />
-      <Button kind="ghost" title={paid ? 'Open my Name Report' : 'See the Name Report · $9.99'} onPress={() => router.push(paid ? '/(tabs)/names' : '/name-report')} />
-      <Button kind="ghost" title="Go to the app" onPress={() => router.replace('/(tabs)/today')} />
     </Screen>
   );
 }

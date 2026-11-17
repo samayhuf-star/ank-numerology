@@ -5,7 +5,7 @@ import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 // RevenueCat setup (create these in the dashboard before TestFlight):
 //  Entitlement "pro"            -> yearly + monthly subscriptions (offering "default", shown with RevenueCat's own paywall)
 //  Entitlement "report_buyer"   -> granted on first Name Report purchase (promotional, lifetime)
-//  Offering "name_report"       -> one package, consumable product "ank_name_report" ($9.99)
+//  Offering "name_report"       -> one package, product "ank_name_report" (Complete Report): Rs 499 India, $9.99 rest of world
 export const ENT_PRO = 'pro';
 export const ENT_BUYER = 'report_buyer';
 export const OFFERING_NAME_REPORT = 'name_report';
@@ -53,6 +53,12 @@ export async function buyNameReport(profileId: string, email: string): Promise<B
   } catch (e: any) {
     return { ok: false, cancelled: !!e?.userCancelled, message: e?.userCancelled ? undefined : (e?.message ?? 'Purchase failed') };
   }
+}
+
+/** Store-localised price of the Complete Report: Rs 499 in India, $9.99 elsewhere (set per territory in App Store Connect). */
+export async function reportPrice(fallback: string): Promise<string> {
+  if (!configured) return fallback;
+  try { const o = await Purchases.getOfferings(); return o.all[OFFERING_NAME_REPORT]?.availablePackages[0]?.product.priceString ?? fallback; } catch { return fallback; }
 }
 
 /** RevenueCat's own paywall for the Pro plans. Returns true when the user bought or restored. */

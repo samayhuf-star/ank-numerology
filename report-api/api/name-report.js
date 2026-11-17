@@ -26,18 +26,24 @@ module.exports = async (req, res) => {
 
   try {
     const lang = normalizeLang(order.language);
-    const pdf = await htmlToPdf(buildHtml(p, lang));
+    // English orders get the dense Complete Report built by the shared engine; other languages keep the localised report until translated.
+    let htmlDoc;
+    if (lang === 'en') {
+      const [{ buildComplete }, { renderHtml }] = await Promise.all([import('../engine/engine/complete.ts'), import('../engine/engine/html.ts')]);
+      htmlDoc = renderHtml(buildComplete({ name: p.name, day: p.day, month: p.month, year: p.year }, new Date()), `Complete Report for ${p.name}`);
+    } else htmlDoc = buildHtml(p, lang);
+    const pdf = await htmlToPdf(htmlDoc);
     const nameNum = N.chaldeanName(p.name).value;
     const verdict = N.nameReport(p.name, p.day, p.month, p.year).verdict;
     const html = `
       <div style="font-family:Helvetica,Arial,sans-serif;max-width:520px;margin:auto;color:#12142B">
         <div style="background:#12142B;color:#fff;padding:24px 28px;border-radius:12px 12px 0 0">
           <div style="color:#C9A227;font-weight:700;letter-spacing:2px;font-size:12px">ANK NUMEROLOGY</div>
-          <div style="font-size:20px;font-weight:700;margin-top:6px">Your Name Report is ready</div>
+          <div style="font-size:20px;font-weight:700;margin-top:6px">Your Complete Report is ready</div>
         </div>
         <div style="padding:24px 28px;background:#F7F7FB;border-radius:0 0 12px 12px">
           <p>Namaste ${escapeHtml(p.name.split(' ')[0] || 'there')},</p>
-          <p>Your detailed numerology Name Report is attached as a PDF. It covers your Mulank, Bhagyank and Chaldean name number, your Lo Shu grid, whether your name spelling is in harmony with your birth numbers${verdict === 'consider' ? ' (with spellings worth considering)' : ''}, and your lucky guide.</p>
+          <p>Your Complete Report is attached as a PDF. It shows your Mulank, Bhagyank and Chaldean name number with the working, how your name agrees with your birth numbers${verdict === 'consider' ? ' (with spellings worth considering)' : ''}, your Lo Shu grid, your next nine years, a calendar for each of the next twelve months, and your lucky guide.</p>
           <p style="color:#6B6F8A;font-size:13px">Name number: ${nameNum} · Prepared just for you.</p>
           <p style="color:#6B6F8A;font-size:12px;margin-top:20px">For reflection and entertainment. Replies to this email reach our support team.</p>
         </div>
@@ -46,9 +52,9 @@ module.exports = async (req, res) => {
     const sent = await resend.emails.send({
       from: FROM,
       to: [email],
-      subject: `${BRAND} — Your Name Report for ${p.name}`,
+      subject: `${BRAND} — Your Complete Report for ${p.name}`,
       html,
-      attachments: [{ filename: `Ank-Name-Report-${slug(p.name)}.pdf`, content: pdf.toString('base64') }],
+      attachments: [{ filename: `Ank-Complete-Report-${slug(p.name)}.pdf`, content: Buffer.from(pdf).toString('base64') }],
     });
     if (sent.error) return bad(res, 502, 'email send failed: ' + (sent.error.message || 'unknown'));
     return res.status(202).json({ ok: true, id: sent.data && sent.data.id, queued: order.id });

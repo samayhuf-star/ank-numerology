@@ -10,12 +10,14 @@ import { submitOrder, validEmail } from '../services/reportApi';
 import { CONFIG } from '../config';
 import { C, F } from '../theme';
 import { View } from 'react-native';
+import { useReportPrice } from '../components/ReportBlocks';
 
 export default function NameReport() {
   const router = useRouter(); const { s, set, active } = useStore();
   const [step, setStep] = useState<'offer' | 'language' | 'email' | 'sent'>('offer');
   const [email, setEmail] = useState(s.email); const [lang, setLang] = useState('en'); // report language is chosen before ordering; English by default
   const [tips, setTips] = useState(false); const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
+  const price = useReportPrice();
   if (!active) return null;
 
   async function pay() {
@@ -33,9 +35,9 @@ export default function NameReport() {
 
   if (step === 'offer') return (
     <Screen><Eyebrow>Name Report</Eyebrow><H1>Is your name helping your numbers?</H1>
-      <Card gold>{['Your past, your present and your next nine years', 'Month-by-month forecast and your best windows ahead', 'Career, money, love and health, with a five-year outlook', 'Name check with spelling options', 'Lucky dates, phone, house and vehicle numbers', '60-page PDF with charts, in the language you choose'].map((x) => <P key={x} muted={false}>{`• ${x}`}</P>)}</Card>
-      <Card><P muted={false}>$9.99, once. You also get 5 free checks every day for life.</P></Card>
-      <Button title="Choose language · $9.99" onPress={() => setStep('language')} /><Button kind="ghost" title="Not now" onPress={() => router.back()} /></Screen>);
+      <Card gold>{['Part 1, Name Match: your name worked out letter by letter and compared with your birth numbers, with spelling options', 'Part 2, Future Report: your past, this year, each month and the next five years', 'Career, money, love and health, with a 30-day plan', 'Lucky dates, phone, house and vehicle numbers', 'Opens in the app and is emailed as a PDF in the language you choose'].map((x) => <P key={x} muted={false}>{`• ${x}`}</P>)}</Card>
+      <Card><P muted={false}>{`${price}, once for this profile. You also get 5 free name checks every day for life.`}</P></Card>
+      <Button title={`Choose language · ${price}`} onPress={() => setStep('language')} /><Button kind="ghost" title="Not now" onPress={() => router.back()} /></Screen>);
   if (step === 'language') {
     const meta = REPORT_LANGS.find((l) => l.code === lang);
     return (

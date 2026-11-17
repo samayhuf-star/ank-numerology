@@ -38,3 +38,6 @@ export function recordCheck(e: Entitlements, usage: Usage, day: number): Usage {
 
 /** The Name Report is bought per profile. Pro does not include it (assumption, confirm with Samay). */
 export const canOpenNameReport = (paidProfileIds: string[], profileId: string) => paidProfileIds.includes(profileId);
+
+/** The Complete Report (Name Match + Future) opens only with the one-time purchase for that profile. Ank Pro does not include it. */
+export const canOpenFullReport = (paidProfileIds: string[], profileId: string) => paidProfileIds.includes(profileId);

@@ -1,5 +1,5 @@
 # Name Report backend — Node + headless Chrome (for HTML→PDF with Indic scripts).
-FROM node:20-slim
+FROM node:22-slim
 
 # Chrome + the font families the report embeds (also installed system-wide as a fallback)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,6 +17,7 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev
 COPY lib ./lib
+COPY engine ./engine
 COPY api ./api
 COPY server.js ./
 

@@ -3,7 +3,7 @@ import Purchases, { LOG_LEVEL, type CustomerInfo, type PurchasesPackage } from '
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 
 // RevenueCat setup (create these in the dashboard before TestFlight):
-//  Entitlement "pro"            -> yearly + monthly subscriptions (offering "default", shown with RevenueCat's own paywall)
+//  Entitlement "pro"            -> weekly subscription, $1.99/week with 7-day free trial (offering "default", shown with RevenueCat's own paywall)
 //  Entitlement "report_buyer"   -> granted on first Name Report purchase (promotional, lifetime)
 //  Offering "name_report"       -> one package, consumable product "ank_name_report" ($9.99)
 export const ENT_PRO = 'pro';

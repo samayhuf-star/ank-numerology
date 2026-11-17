@@ -23,7 +23,7 @@ export default function Paywall() {
   }
   useEffect(() => { open(); /* eslint-disable-next-line */ }, []);
   return (
-    <Screen><H1>Ank Pro</H1><P>Unlimited checks for every profile. $19.99 a year with a 3-day free trial, or $3.99 a month. Cancel any time in your App Store settings.</P>
+    <Screen><H1>Ank Pro</H1><P>Unlimited checks for every profile. Try 7 days free, then $1.99 a week. Cancel any time in your App Store settings.</P>
       {busy ? <ActivityIndicator color={C.gold} /> : null}
       {msg ? <Text accessibilityRole="alert" style={{ color: C.muted, fontFamily: F.sans }}>{msg}</Text> : null}
       <Button title="See Pro plans" onPress={open} /><Button kind="ghost" title="Restore Purchases" onPress={doRestore} /><Button kind="ghost" title="Close" onPress={() => router.back()} /></Screen>);

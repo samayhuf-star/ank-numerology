@@ -7,6 +7,7 @@ import { LoShuGridView } from '../components/ui';
 import { useStore } from '../store';
 import { t } from '../i18n';
 import { LANGUAGES } from '../i18n/languages';
+import { coverage } from '../i18n';
 import { fromLocale } from '../i18n';
 import { isValidDate } from '../engine/numerology';
 import { canCheck, recordCheck } from '../logic/entitlements';
@@ -77,6 +78,7 @@ export default function Onboarding() {
   if (step === 5) return (
     <Screen><H1>{L('lang.title')}</H1><P>{L('lang.body')}</P>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{LANGUAGES.map((l) => <Chip key={l.code} label={l.native} on={lang === l.code} onPress={() => setLang(l.code)} />)}</View>
+      {coverage(lang) < 1 ? <Text style={{ color: '#8a8aa0', fontSize: 12, marginTop: 8 }}>App screens for this language are still being translated and show in English for now. You can still order your Name Report in it where available.</Text> : null}
       <P size={12}>{L('lang.note')}</P><Button title={L('continue')} onPress={next} /></Screen>);
   if (step === 6) return (
     <Screen><H1>{L('focus.title')}</H1><P>{L('focus.body')}</P>

@@ -1,5 +1,6 @@
 export type Lang = { code: string; native: string; english: string; rtl?: boolean; script: string };
-// 25 launch languages: English, German, French and the 22 scheduled Indian languages.
+// 33 languages: English, the 22 scheduled Indian languages (+ Nepali), and the 10 most-spoken foreign languages
+// (French, German, Spanish, Mandarin Chinese, Arabic, Portuguese, Russian, Japanese, Indonesian, Korean).
 export const LANGUAGES: Lang[] = [
   { code: 'en', native: 'English', english: 'English', script: 'Latin' },
   { code: 'hi', native: 'हिन्दी', english: 'Hindi', script: 'Devanagari' },
@@ -26,6 +27,14 @@ export const LANGUAGES: Lang[] = [
   { code: 'mni', native: 'ꯃꯩꯇꯩꯂꯣꯟ', english: 'Meitei', script: 'Meetei Mayek' },
   { code: 'de', native: 'Deutsch', english: 'German', script: 'Latin' },
   { code: 'fr', native: 'Français', english: 'French', script: 'Latin' },
+  { code: 'es', native: 'Español', english: 'Spanish', script: 'Latin' },
+  { code: 'zh', native: '中文', english: 'Chinese', script: 'Han' },
+  { code: 'ar', native: 'العربية', english: 'Arabic', rtl: true, script: 'Arabic' },
+  { code: 'pt', native: 'Português', english: 'Portuguese', script: 'Latin' },
+  { code: 'ru', native: 'Русский', english: 'Russian', script: 'Cyrillic' },
+  { code: 'ja', native: '日本語', english: 'Japanese', script: 'Japanese' },
+  { code: 'id', native: 'Bahasa Indonesia', english: 'Indonesian', script: 'Latin' },
+  { code: 'ko', native: '한국어', english: 'Korean', script: 'Hangul' },
 ];
 export const isRtl = (code: string) => !!LANGUAGES.find((l) => l.code === code)?.rtl;
 

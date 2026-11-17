@@ -17,7 +17,7 @@ export const en = {
   'dob.body': 'Your date of birth gives your birth number and destiny number.',
   'dob.day': 'Day', 'dob.month': 'Month', 'dob.year': 'Year', 'dob.error': 'Please enter a real date.',
   'lang.title': 'Choose your language',
-  'lang.body': 'Your reading and Name Report will be in this language. 25 languages.',
+  'lang.body': 'Your reading and Name Report will be in this language. 33 languages.',
   'lang.note': 'You can change this any time in Settings.',
   'focus.title': 'What would you like help with?', 'focus.body': 'Pick any. We will put these first.',
   'alerts.title': 'Stay on track',

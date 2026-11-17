@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Button, Card, Chip, H1, P, Screen } from '../components/ui';
 import { useStore, resetAll } from '../store';
 import { LANGUAGES } from '../i18n/languages';
+import { coverage } from '../i18n';
 import { requestPermission } from '../services/notifications';
 import { CONFIG } from '../config';
 import { C, F } from '../theme';
@@ -19,6 +20,7 @@ export default function Settings() {
           <Switch accessibilityLabel="Name Report tips and offers" value={s.notif.tips === 'yes'} onValueChange={(v) => setNotif({ tips: v ? 'yes' : 'no' })} trackColor={{ true: C.gold, false: C.border }} /></View></Card>
       <Text style={{ fontFamily: F.sansSemi, color: C.muted }}>Language</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{LANGUAGES.map((l) => <Chip key={l.code} label={l.native} on={s.language === l.code} onPress={() => set({ language: l.code })} />)}</View>
+      {coverage(s.language) < 1 ? <Text style={{ color: '#8a8aa0', fontSize: 12, marginTop: 8 }}>App screens for this language are still being translated and show in English for now. You can still order your Name Report in it where available.</Text> : null}
       <P size={12}>Right-to-left languages apply fully after you restart the app.</P>
       <Button kind="ghost" title="Restore Purchases" onPress={() => router.push('/paywall')} />
       <Button kind="ghost" title="Privacy Policy" onPress={() => Linking.openURL(CONFIG.privacyUrl)} />

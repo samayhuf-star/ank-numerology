@@ -1,4 +1,4 @@
-# Deploying the Name Report backend to claude-workstation (1 GB droplet)
+# Deploying the Complete Report backend to claude-workstation (1 GB droplet)
 
 The service renders the report with headless Chrome, so the host needs Chrome + the Noto fonts. Two ways to run it; **systemd is lighter on a 1 GB box** (Docker + Chrome in a container is tight at 1 GB).
 
@@ -17,7 +17,7 @@ sudo apt-get update && sudo apt-get install -y google-chrome-stable fonts-noto f
 
 # 2. App
 sudo mkdir -p /opt/ank-report-api && cd /opt/ank-report-api
-# copy lib/ api/ server.js package.json here (git clone the repo's report-api/ folder, or scp the tgz)
+# copy lib/ engine/ api/ server.js package.json here (engine/ is the shared report engine; refresh it with ./sync-engine.sh from the repo root before copying). Needs Node 22+ (runs the TypeScript engine directly). (git clone the repo's report-api/ folder, or scp the tgz)
 npm install --omit=dev
 
 # 3. Service

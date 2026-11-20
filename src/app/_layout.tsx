@@ -8,6 +8,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-goog
 import { I18nManager } from 'react-native';
 import { StoreProvider, useStore } from '../store';
 import { initPurchases, refreshEntitlements } from '../services/purchases';
+import { restoreReports } from '../services/restoreReports';
 import { reschedule } from '../services/notifications';
 import { flush } from '../services/reportApi';
 import { daysIndex } from '../engine/cycles';
@@ -33,7 +34,15 @@ function Boot() {
     if (!s.loaded) return;
     const today = daysIndex(new Date());
     set((cur) => ({ lastOpenDay: today, startDay: cur.startDay || today }));
-    if (initPurchases()) refreshEntitlements().then((e) => { if (e) set((cur) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || cur.ent.reportBuyer } })); }).catch(() => {});
+    if (initPurchases()) refreshEntitlements().then(async (e) => {
+      if (!e) return;
+      set((cur) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || cur.ent.reportBuyer } }));
+      // Reinstall / new phone: the store says they bought a report but this device has no paid profiles, so rebuild them from the server ledger.
+      if (e.reportBuyer && s.paidProfiles.length === 0) {
+        const rep = await restoreReports({ profiles: s.profiles, paidProfiles: s.paidProfiles, ent: { pro: e.pro, reportBuyer: true } });
+        if (rep) { const { restoredCount, ...patch } = rep; set(patch); }
+      }
+    }).catch(() => {});
     if (s.pendingOrders.length) flush(s.pendingOrders).then((left) => set({ pendingOrders: left })).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.loaded]);

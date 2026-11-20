@@ -24,6 +24,7 @@ export function initPurchases(appUserId?: string) {
 }
 
 export const purchasesReady = () => configured;
+export const getAppUserId = async () => (configured ? Purchases.getAppUserID() : '');
 
 export function entitlementsFrom(info: CustomerInfo) {
   return { pro: !!info.entitlements.active[ENT_PRO], reportBuyer: !!info.entitlements.active[ENT_BUYER] };

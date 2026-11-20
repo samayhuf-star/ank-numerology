@@ -8,16 +8,16 @@ export type Notif = { daily: boolean; tips: 'unset' | 'yes' | 'no'; time: string
 export type State = {
   loaded: boolean; onboarded: boolean; language: string; focus: string[];
   profiles: Profile[]; activeId: string | null;
-  usage: Usage; ent: Entitlements; paidProfiles: string[];
+  usage: Usage; ent: Entitlements; paidProfiles: string[]; unusedReports: number;
   notif: Notif; startDay: number; lastOpenDay: number; email: string;
   pendingOrders: Order[];
 };
-export type Order = { id: string; email: string; language: string; profile: Profile; tips: boolean; createdAt: number };
+export type Order = { id: string; appUserId: string; email: string; language: string; profile: Profile; tips: boolean; createdAt: number };
 
 const KEY = 'ank.state.v1';
 const initial: State = {
   loaded: false, onboarded: false, language: 'en', focus: [], profiles: [], activeId: null,
-  usage: newUsage(), ent: { reportBuyer: false, pro: false }, paidProfiles: [],
+  usage: newUsage(), ent: { reportBuyer: false, pro: false }, paidProfiles: [], unusedReports: 0,
   notif: { daily: false, tips: 'unset', time: '08:00' }, startDay: 0, lastOpenDay: 0, email: '', pendingOrders: [],
 };
 

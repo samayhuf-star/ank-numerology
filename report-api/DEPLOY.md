@@ -7,6 +7,10 @@ The service renders the report with headless Chrome, so the host needs Chrome + 
 - `REPORT_FROM` — `Ank Numerology <reports@adiology.io>` (current decision: keep adiology.io)
 - `CHROME_PATH` — `/usr/bin/google-chrome-stable`
 - `PORT` — `8080` (default)
+- `REVENUECAT_SECRET_KEY` — RevenueCat **secret** (v1 REST) API key, used to verify the buyer's `ank_name_report` purchase. **Required**: without it every order is refused.
+- `REPORT_LEDGER_PATH` — where the purchase ledger lives (default `report-api/data/ledger.json`; use a persistent path such as `/var/lib/ank-report/ledger.json`, and back it up. It is what Restore Purchases reads)
+- `REPORT_MAX_SENDS` — re-sends allowed per purchase (default 5)
+- `REPORT_ALLOW_SANDBOX` — set `0` in production once TestFlight testing is done, so sandbox purchases stop counting
 
 ## Option A — systemd (recommended for 1 GB)
 ```bash
@@ -60,8 +64,11 @@ Then rebuild + resubmit the app so the client posts orders to the live endpoint.
 ## Smoke test
 ```bash
 curl -s https://api.klenzer.online/api/name-report   # -> {"ok":true,...}
-curl -s -X POST https://api.klenzer.online/api/name-report \
+# Without a purchase this must be refused (401 no identity / 402 no purchase), and no email is sent:
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://api.klenzer.online/api/name-report \
   -H 'content-type: application/json' \
-  -d '{"email":"you@example.com","language":"hi","profile":{"name":"Rajesh Kumar Sharma","day":18,"month":7,"year":1990}}'
-# -> 202, and the PDF arrives by email
+  -d '{"appUserId":"$RCAnonymousID:test","email":"you@example.com","language":"en","profile":{"name":"Rajesh Kumar Sharma","day":18,"month":7,"year":1990}}'   # -> 402
+# A real order needs a sandbox/TestFlight purchase of ank_name_report made by that appUserId; then it returns 202 and the PDF arrives.
+# Restore lookup (profiles that were bought + unused purchases):
+curl -s -X POST https://api.klenzer.online/api/purchased-reports -H 'content-type: application/json' -d '{"appUserId":"<id>"}'
 ```

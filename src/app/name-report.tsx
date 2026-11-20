@@ -5,7 +5,7 @@ import { Button, Card, Chip, Eyebrow, Field, H1, P, Screen } from '../components
 import { useStore, type Order } from '../store';
 import { t } from '../i18n';
 import { LANGUAGES, REPORT_LANGS } from '../i18n/languages';
-import { buyNameReport } from '../services/purchases';
+import { buyNameReport, getAppUserId } from '../services/purchases';
 import { submitOrder, validEmail } from '../services/reportApi';
 import { CONFIG } from '../config';
 import { C, F } from '../theme';
@@ -22,13 +22,17 @@ export default function NameReport() {
 
   async function pay() {
     setErr(''); setBusy(true);
-    const res = await buyNameReport(active!.id, email.trim());
-    if (!res.ok) { setBusy(false); if (!res.cancelled) setErr(res.message ?? 'Purchase failed'); return; }
-    const order: Order = { id: `o${Date.now()}`, email: email.trim(), language: lang, profile: active!, tips, createdAt: Date.now() };
+    // A purchase made earlier but never used (e.g. the order failed, or restored on a new phone) is spent first instead of charging again.
+    if (s.unusedReports <= 0) {
+      const res = await buyNameReport(active!.id, email.trim());
+      if (!res.ok) { setBusy(false); if (!res.cancelled) setErr(res.message ?? 'Purchase failed'); return; }
+    }
+    const order: Order = { id: `o${Date.now()}`, appUserId: await getAppUserId(), email: email.trim(), language: lang, profile: active!, tips, createdAt: Date.now() };
     const sent = await submitOrder(order);
     set((cur) => ({
       email: email.trim(), paidProfiles: [...new Set([...cur.paidProfiles, active!.id])],
-      ent: { ...cur.ent, reportBuyer: true }, pendingOrders: sent ? cur.pendingOrders : [...cur.pendingOrders, order],
+      unusedReports: Math.max(0, cur.unusedReports - (s.unusedReports > 0 ? 1 : 0)),
+      ent: { ...cur.ent, reportBuyer: true }, pendingOrders: sent === 'retry' ? [...cur.pendingOrders, order] : cur.pendingOrders,
     }));
     setBusy(false); setStep('sent');
   }

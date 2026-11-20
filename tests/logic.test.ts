@@ -105,3 +105,16 @@ test('checkSpelling flags a spelling that adds a missing digit', () => {
   assert.deepEqual(o.addsMissing, [8]);
   assert.equal(o.matchesMulank, false);
 });
+
+import { mergeRestored } from '../src/logic/restore.ts';
+test('restore marks existing profile paid by name + dob and re-creates a missing one', () => {
+  const local = [{ id: 'a1', name: 'Asha  Rao', day: 3, month: 4, year: 1990 }];
+  const r = mergeRestored(local, [], [
+    { fp: 'f1', name: 'asha rao', day: 3, month: 4, year: 1990 },
+    { fp: 'f2', name: 'Ravi', day: 1, month: 2, year: 1985 },
+  ]);
+  assert.equal(r.profiles.length, 2);
+  assert.deepEqual(r.paidProfiles.sort(), ['a1', 'rf2']);
+  assert.equal(canOpenNameReport(r.paidProfiles, 'rf2'), true);
+  assert.deepEqual(mergeRestored(r.profiles, r.paidProfiles, []).paidProfiles.sort(), ['a1', 'rf2']); // idempotent
+});

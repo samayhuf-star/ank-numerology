@@ -2,6 +2,7 @@
 // For hosts with a system Chrome (e.g. the claude-workstation VM). No framework.
 const http = require('http');
 const handler = require('./api/name-report');
+const restorable = require('./api/purchased-reports');
 
 const PORT = process.env.PORT || 8080;
 const MAX_BODY = 256 * 1024;
@@ -19,9 +20,10 @@ const server = http.createServer((req, res) => {
 
   const url = (req.url || '/').split('?')[0];
   if (url === '/' || url === '/health') return send(res, 200, { ok: true, service: 'ank-name-report', status: 'up' });
-  if (url !== '/api/name-report' && url !== '/name-report') return send(res, 404, { ok: false, error: 'not found' });
+  const isRestore = url === '/api/purchased-reports' || url === '/purchased-reports';
+  if (!isRestore && url !== '/api/name-report' && url !== '/name-report') return send(res, 404, { ok: false, error: 'not found' });
 
-  if (req.method === 'GET') return handler(req, res);
+  if (req.method === 'GET') return isRestore ? send(res, 405, { ok: false, error: 'method not allowed' }) : handler(req, res);
   if (req.method !== 'POST') return send(res, 405, { ok: false, error: 'method not allowed' });
 
   let data = '', tooBig = false;
@@ -29,7 +31,7 @@ const server = http.createServer((req, res) => {
   req.on('end', () => {
     if (tooBig) return;
     try { req.body = data ? JSON.parse(data) : {}; } catch { return send(res, 400, { ok: false, error: 'invalid json' }); }
-    Promise.resolve(handler(req, res)).catch((e) => { if (!res.headersSent) send(res, 500, { ok: false, error: String(e && e.message || e) }); });
+    Promise.resolve((isRestore ? restorable : handler)(req, res)).catch((e) => { if (!res.headersSent) send(res, 500, { ok: false, error: String(e && e.message || e) }); });
   });
 });
 

@@ -1,9 +1,11 @@
-// POST /api/name-report  — body: Order { id, email, language, profile{ id,name,day,month,year }, tips, createdAt }
+// POST /api/name-report  — body: Order { id, appUserId, email, language, profile{ id,name,day,month,year }, tips, createdAt }
+// The order is only honoured if RevenueCat shows an unused (or already-spent-on-this-profile) 'ank_name_report' purchase for appUserId.
 // Computes the numerology Name Report, renders a PDF, emails it via Resend. Returns 202 when sent.
 const { Resend } = require('resend');
 const { buildHtml } = require('../lib/html');
 const { htmlToPdf } = require('../lib/render');
 const N = require('../lib/numerology');
+const { authorizeOrder } = require('../lib/purchases');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.REPORT_FROM || 'Ank Numerology <reports@adiology.io>';
@@ -23,6 +25,10 @@ module.exports = async (req, res) => {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(email))) return bad(res, 400, 'invalid email');
   if (!N.isValidDate(p.day, p.month, p.year)) return bad(res, 400, 'invalid date of birth');
   if (!process.env.RESEND_API_KEY) return bad(res, 500, 'email not configured');
+
+  // Payment gate: no verified purchase, no report (and no email is sent to the supplied address).
+  const auth = await authorizeOrder(order.appUserId, p);
+  if (!auth.ok) return bad(res, auth.status, auth.error);
 
   try {
     const lang = normalizeLang(order.language);
@@ -57,6 +63,7 @@ module.exports = async (req, res) => {
       attachments: [{ filename: `Ank-Complete-Report-${slug(p.name)}.pdf`, content: Buffer.from(pdf).toString('base64') }],
     });
     if (sent.error) return bad(res, 502, 'email send failed: ' + (sent.error.message || 'unknown'));
+    await auth.claim();
     return res.status(202).json({ ok: true, id: sent.data && sent.data.id, queued: order.id });
   } catch (e) {
     return bad(res, 500, 'report generation failed: ' + (e && e.message));

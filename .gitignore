@@ -6,3 +6,4 @@ dist/
 ios/
 android/
 report-api/node_modules/
+report-api/data/

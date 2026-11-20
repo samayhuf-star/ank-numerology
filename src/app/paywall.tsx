@@ -3,12 +3,13 @@ import { ActivityIndicator, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, H1, P, Screen } from '../components/ui';
 import { useStore } from '../store';
+import { restoreReports } from '../services/restoreReports';
 import { purchasesReady, refreshEntitlements, restore, showProPaywall } from '../services/purchases';
 import { C, F } from '../theme';
 
 // Pro plans are shown with RevenueCat's own paywall. Restore Purchases is always available.
 export default function Paywall() {
-  const router = useRouter(); const { set } = useStore();
+  const router = useRouter(); const { s, set } = useStore();
   const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function apply() { const e = await refreshEntitlements(); if (e) set((c) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || c.ent.reportBuyer } })); return e; }
   async function open() {
@@ -18,8 +19,16 @@ export default function Paywall() {
   }
   async function doRestore() {
     setBusy(true); setMsg('');
-    try { const e = await restore(); if (e) set((c) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || c.ent.reportBuyer } })); setMsg(e?.pro || e?.reportBuyer ? 'Purchases restored.' : 'No purchases found to restore.'); }
-    catch { setMsg('Could not restore. Please try again.'); } finally { setBusy(false); }
+    try {
+      const e = await restore();
+      if (e) set((c) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || c.ent.reportBuyer } }));
+      // Report access is a list of paid profiles, not a store flag, so rebuild it from the server's purchase ledger.
+      const rep = await restoreReports(s);
+      if (rep) { const { restoredCount, ...patch } = rep; set(patch); }
+      const found = !!(e?.pro || e?.reportBuyer || rep?.restoredCount || rep?.unusedReports);
+      const parts = [e?.pro ? 'Ank Pro restored.' : '', rep?.restoredCount ? `${rep.restoredCount} Complete Report${rep.restoredCount > 1 ? 's' : ''} unlocked again.` : '', rep?.unusedReports ? 'You have a Complete Report you have not used yet. Open Name Report to get it.' : '', !rep && e?.reportBuyer ? 'Could not reach our server to unlock your reports. Check your connection and restore again.' : ''].filter(Boolean);
+      setMsg(parts.length ? parts.join(' ') : found ? 'Purchases restored.' : 'No purchases found to restore.');
+    } catch { setMsg('Could not restore. Please try again.'); } finally { setBusy(false); }
   }
   useEffect(() => { open(); /* eslint-disable-next-line */ }, []);
   return (

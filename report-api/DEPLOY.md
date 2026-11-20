@@ -1,74 +1,78 @@
-# Deploying the Complete Report backend to claude-workstation (1 GB droplet)
+# Deploying the Complete Report backend
 
-The service renders the report with headless Chrome, so the host needs Chrome + the Noto fonts. Two ways to run it; **systemd is lighter on a 1 GB box** (Docker + Chrome in a container is tight at 1 GB).
+This service needs Node 22.18+ (TypeScript stripping), Chrome, Noto fonts, a verified sending domain and a **single always-on process with durable storage**. Do not deploy its JSON ledger to an ephemeral or autoscaled filesystem.
 
-## Env vars (both methods)
-- `RESEND_API_KEY` — Resend sending key
-- `REPORT_FROM` — `Ank Numerology <reports@adiology.io>` (current decision: keep adiology.io)
-- `CHROME_PATH` — `/usr/bin/google-chrome-stable`
-- `PORT` — `8080` (default)
-- `REVENUECAT_SECRET_KEY` — RevenueCat **secret** (v1 REST) API key, used to verify the buyer's `ank_name_report` purchase. **Required**: without it every order is refused.
-- `REPORT_LEDGER_PATH` — where the purchase ledger lives (default `report-api/data/ledger.json`; use a persistent path such as `/var/lib/ank-report/ledger.json`, and back it up. It is what Restore Purchases reads)
-- `REPORT_MAX_SENDS` — re-sends allowed per purchase (default 5)
-- `REPORT_ALLOW_SANDBOX` — set `0` in production once TestFlight testing is done, so sandbox purchases stop counting
+## Release safety gate
 
-## Option A — systemd (recommended for 1 GB)
-```bash
-# 1. Chrome + fonts
-wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google.gpg
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-sudo apt-get update && sudo apt-get install -y google-chrome-stable fonts-noto fonts-noto-core
+The report and restore endpoints require a **verified Cloud email session**. A RevenueCat App User ID alone is not authentication. The app now has email-code sign-in, secure session storage, refresh, sign-out and account deletion. Its account UUID is linked through RevenueCat's supported `logIn` flow; report purchase lookups derive identity from Cloud Auth, never a caller-supplied ID. Historical order IDs stay unchanged for retry idempotency.
 
-# 2. App
-sudo mkdir -p /opt/ank-report-api && cd /opt/ank-report-api
-# copy lib/ engine/ api/ server.js package.json here (engine/ is the shared report engine; refresh it with ./sync-engine.sh from the repo root before copying). Needs Node 22+ (runs the TypeScript engine directly). (git clone the repo's report-api/ folder, or scp the tgz)
-npm install --omit=dev
+Email-code issuance and account deletion functions are prepared in `cloud/`. Sending requires `RESEND_API_KEY` and `ANK_AUTH_FROM` (a verified sender) in Cloud secrets. The sender reserves email/IP/global rate limits atomically and never returns codes to the app. Account deletion validates the session with Cloud Auth before deleting its user. Access and refresh tokens remain in native SecureStore; the web target keeps sessions in memory only.
 
-# 3. Service
-sudo tee /etc/systemd/system/ank-report.service >/dev/null <<'UNIT'
+The report API still requires owner-approved deployment to its durable existing host, its real HTTPS URL in `EXPO_PUBLIC_API_URL`, and iPhone purchase/restore checks. Do not deploy it over an existing service or recreate the ledger without approval.
+
+## Server configuration
+
+Set values through the host's secret manager or a protected environment file, never source control or chat:
+
+- `RESEND_API_KEY`: the Resend sending secret.
+- `REVENUECAT_SECRET_KEY`: RevenueCat server-side v1 API key.
+- `REPORT_FROM`: verified sender, currently `Ank Numerology <reports@adiology.io>`.
+- `ANK_AUTH_URL`: trusted Cloud base URL. Defaults to the connected Ank project `https://fiwszjxgkxqhhamiftvj.supabase.co`.
+- `ANK_AUTH_PUBLISHABLE_KEY`: that project's public client key (not a service-role key); the connected project's key is the code default.
+- `REPORT_LEDGER_PATH`: an absolute persistent path, for example `/var/lib/ank-report/ledger.json`.
+- `CHROME_PATH`: installed Chrome executable path.
+- `PORT`: default `8080`.
+- `REPORT_MAX_SENDS`: successful deliveries per purchase, default `5`, accepted range `1`–`20`.
+- `REPORT_ALLOW_SANDBOX`: leave enabled for TestFlight. Separate staging and production ledgers if using different sandbox policies.
+
+The server sends the presented bearer token only to its trusted Cloud Auth `/auth/v1/user` endpoint and requires a confirmed, non-anonymous email account. It uses that validated user UUID for RevenueCat lookups. Changing the submitted `appUserId` never grants another account's purchases. Ledger rows are pinned to their first verified owner; later transfers require support review instead of automatically exposing a different owner's profile.
+
+## Initialize a NEW ledger only
+
+With `REPORT_LEDGER_PATH` set, run `node init-ledger.js` once. It uses exclusive creation and cannot replace an existing ledger. Never initialize an empty ledger to recover a deployment with previous customers: recover its saved ledger instead. Missing, corrupt and unreadable ledgers intentionally stop redemption and restore.
+
+Back up the ledger and test recovery before accepting purchases. The file is sensitive: it contains names, dates of birth and transaction mappings. Store it with restricted permissions. Atomic writes are synced before rename. Do not run multiple replicas against this file.
+
+## systemd
+
+Install dependencies from the lockfile, install Chrome/fonts, and use a service account with write access to the persistent ledger directory. Configure a protected `/etc/ank-report.env` with all required server variables.
+
+```ini
 [Unit]
-Description=Ank Numerology Name Report API
+Description=Ank Numerology Report API
 After=network.target
 [Service]
 WorkingDirectory=/opt/ank-report-api
 ExecStart=/usr/bin/node server.js
+EnvironmentFile=/etc/ank-report.env
 Restart=always
-Environment=PORT=8080
-Environment=CHROME_PATH=/usr/bin/google-chrome-stable
-Environment=RESEND_API_KEY=__set_me__
-Environment=REPORT_FROM=Ank Numerology <reports@adiology.io>
 [Install]
 WantedBy=multi-user.target
-UNIT
-sudo systemctl daemon-reload && sudo systemctl enable --now ank-report
 ```
-Add 1–2 GB swap first (`fallocate -l 2G /swapfile …`) — Chrome spikes memory on a 1 GB box.
 
-## Option B — Docker
-```bash
+Run behind an HTTPS reverse proxy with request limits. Protect all deployment environment files. Size the host for Chrome rendering; a 1 GB host may need additional memory/swap.
+
+## Docker
+
+Use a persistent volume, not just container storage. Provide secrets through the host's protected environment file; set `REPORT_LEDGER_PATH=/data/ledger.json` inside it.
+
+```sh
 docker build -t ank-report-api .
-docker run -d --name ank-report --restart always -p 8080:8080 \
-  -e RESEND_API_KEY=... -e "REPORT_FROM=Ank Numerology <reports@adiology.io>" ank-report-api
+docker run -d --name ank-report --restart always -p 127.0.0.1:8080:8080 \
+  --env-file /etc/ank-report.env -v ank-report-ledger:/data ank-report-api
 ```
 
-## Expose it
-Put it behind the droplet's nginx (or Caddy) on a subdomain with TLS, e.g. `https://api.klenzer.online` → `127.0.0.1:8080`. Keep `/api/name-report` as the path.
+For a brand-new service initialize the volume once with `node init-ledger.js` using the same configuration and volume. Do not recreate it when replacing the container.
 
-## Wire the app
-```bash
-# base URL WITHOUT the trailing /name-report
-eas env:create --name EXPO_PUBLIC_API_URL --value "https://api.klenzer.online/api" --environment production
-```
-Then rebuild + resubmit the app so the client posts orders to the live endpoint.
+## App connection and release checks
 
-## Smoke test
-```bash
-curl -s https://api.klenzer.online/api/name-report   # -> {"ok":true,...}
-# Without a purchase this must be refused (401 no identity / 402 no purchase), and no email is sent:
-curl -s -o /dev/null -w '%{http_code}\n' -X POST https://api.klenzer.online/api/name-report \
-  -H 'content-type: application/json' \
-  -d '{"appUserId":"$RCAnonymousID:test","email":"you@example.com","language":"en","profile":{"name":"Rajesh Kumar Sharma","day":18,"month":7,"year":1990}}'   # -> 402
-# A real order needs a sandbox/TestFlight purchase of ank_name_report made by that appUserId; then it returns 202 and the PDF arrives.
-# Restore lookup (profiles that were bought + unused purchases):
-curl -s -X POST https://api.klenzer.online/api/purchased-reports -H 'content-type: application/json' -d '{"appUserId":"<id>"}'
-```
+`EXPO_PUBLIC_API_URL` must be the real HTTPS service base, without `/name-report`; both root and `/api` prefixes are supported for `/health`, `/name-report` and `/purchased-reports`. Rebuild the app after changing its Expo configuration. Do not place Resend, RevenueCat secret keys or private signing keys in Expo public variables.
+
+- `/health` returning `ok: true` only proves the process is up. `ready: true` additionally requires email/purchase verification configuration, owner verification configuration and a readable ledger.
+- Try another user's ID, missing/expired/modified tokens, no purchase, a purchase redeemed for another profile, and a corrupt/missing ledger. None should send email or reveal report identities.
+- A valid owner's verified purchase should return `202` only after the email provider accepts the message. This does not prove inbox delivery.
+- Repeating the same order must not send again or consume another resend allowance. Reusing its ID with different details must fail.
+- A device retry must retain pending orders, including old and rejected ones, without charging again.
+- Verify actual PDF rendering, email receipt, reinstall/restore and sandbox purchases on an iPhone. Local source tests do not replace these checks.
+
+The Cloud sign-in and account-deletion functions are separate from this hosted report service. Deploying them does not deploy PDF generation, migrate the existing ledger, prove email delivery or validate iPhone purchases. Complete those release checks before enabling report checkout.

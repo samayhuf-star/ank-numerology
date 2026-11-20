@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, H1, P, Screen } from '../components/ui';
 import { useStore } from '../store';
+import { useAuth } from '../services/auth';
 import { restoreReports } from '../services/restoreReports';
 import { purchasesReady, refreshEntitlements, restore, showProPaywall } from '../services/purchases';
 import { C, F } from '../theme';
@@ -10,15 +11,21 @@ import { C, F } from '../theme';
 // Pro plans are shown with RevenueCat's own paywall. Restore Purchases is always available.
 export default function Paywall() {
   const router = useRouter(); const { s, set } = useStore();
+  const auth = useAuth();
   const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   async function apply() { const e = await refreshEntitlements(); if (e) set((c) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || c.ent.reportBuyer } })); return e; }
   async function open() {
-    setBusy(true); setMsg('');
+    if (inFlight.current) return;
+    inFlight.current = true; setBusy(true); setMsg('');
     try { if (!purchasesReady()) { setMsg('Purchases are not set up in this build yet.'); return; } await showProPaywall(); const e = await apply(); if (e?.pro) router.back(); }
-    catch (e: any) { setMsg(e?.message ?? 'Something went wrong. Please try again.'); } finally { setBusy(false); }
+    catch (e: any) { setMsg(e?.message ?? 'Something went wrong. Please try again.'); } finally { inFlight.current = false; setBusy(false); }
   }
   async function doRestore() {
-    setBusy(true); setMsg('');
+    if (!auth.account) { router.push('/account'); return; }
+    if (!auth.billingReady) { setMsg('Connect your verified purchase account first. Open Manage account and retry.'); return; }
+    if (inFlight.current) return;
+    inFlight.current = true; setBusy(true); setMsg('');
     try {
       const e = await restore();
       if (e) set((c) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || c.ent.reportBuyer } }));
@@ -28,12 +35,12 @@ export default function Paywall() {
       const found = !!(e?.pro || e?.reportBuyer || rep?.restoredCount || rep?.unusedReports);
       const parts = [e?.pro ? 'Ank Pro restored.' : '', rep?.restoredCount ? `${rep.restoredCount} Complete Report${rep.restoredCount > 1 ? 's' : ''} unlocked again.` : '', rep?.unusedReports ? 'You have a Complete Report you have not used yet. Open Name Report to get it.' : '', !rep && e?.reportBuyer ? 'Could not reach our server to unlock your reports. Check your connection and restore again.' : ''].filter(Boolean);
       setMsg(parts.length ? parts.join(' ') : found ? 'Purchases restored.' : 'No purchases found to restore.');
-    } catch { setMsg('Could not restore. Please try again.'); } finally { setBusy(false); }
+    } catch { setMsg('Could not restore. Please try again.'); } finally { inFlight.current = false; setBusy(false); }
   }
-  useEffect(() => { open(); /* eslint-disable-next-line */ }, []);
+  // Do not open a purchase sheet automatically when the user came here to restore.
   return (
-    <Screen><H1>Ank Pro</H1><P>Unlimited checks for every profile. $19.99 a year with a 3-day free trial, or $3.99 a month. Cancel any time in your App Store settings.</P>
+    <Screen><H1>Ank Pro</H1><P>Unlimited checks for every profile. See plans for the current App Store price, billing period and any trial you’re eligible for before confirming. Cancel in your App Store subscription settings.</P>
       {busy ? <ActivityIndicator color={C.gold} /> : null}
       {msg ? <Text accessibilityRole="alert" style={{ color: C.muted, fontFamily: F.sans }}>{msg}</Text> : null}
-      <Button title="See Pro plans" onPress={open} /><Button kind="ghost" title="Restore Purchases" onPress={doRestore} /><Button kind="ghost" title="Close" onPress={() => router.back()} /></Screen>);
+      <Button title="See Pro plans" disabled={busy} onPress={open} /><Button kind="ghost" title="Restore Purchases" disabled={busy} onPress={doRestore} /><Button kind="ghost" title={auth.account ? 'Manage account' : 'Sign in to restore reports'} disabled={busy} onPress={() => router.push('/account')} /><Button kind="ghost" title="Close" disabled={busy} onPress={() => router.back()} /></Screen>);
 }

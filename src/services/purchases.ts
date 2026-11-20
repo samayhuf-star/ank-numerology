@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL, type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
-import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
+import RevenueCatUI from 'react-native-purchases-ui';
 
 // RevenueCat setup (create these in the dashboard before TestFlight):
 //  Entitlement "pro"            -> yearly + monthly subscriptions (offering "default", shown with RevenueCat's own paywall)
@@ -10,7 +10,7 @@ export const ENT_PRO = 'pro';
 export const ENT_BUYER = 'report_buyer';
 export const OFFERING_NAME_REPORT = 'name_report';
 
-const KEYS = { ios: process.env.EXPO_PUBLIC_RC_IOS_KEY ?? '', android: process.env.EXPO_PUBLIC_RC_ANDROID_KEY ?? '' };
+const KEYS = { ios: process.env.EXPO_PUBLIC_RC_IOS_KEY ?? 'appl_zRLFuqSZdmZsDPLrvakpgAPnzfI', android: process.env.EXPO_PUBLIC_RC_ANDROID_KEY ?? '' };
 let configured = false;
 
 export function initPurchases(appUserId?: string) {
@@ -25,6 +25,23 @@ export function initPurchases(appUserId?: string) {
 
 export const purchasesReady = () => configured;
 export const getAppUserId = async () => (configured ? Purchases.getAppUserID() : '');
+let identityTail: Promise<unknown> = Promise.resolve();
+export function connectPurchaseAccount(id: string) {
+  const run = identityTail.then(async () => {
+    if (!initPurchases()) throw new Error('Purchases are unavailable in this build.');
+    const previous = await Purchases.getAppUserID();
+    const result = await Purchases.logIn(id);
+    if (await Purchases.getAppUserID() !== id) throw new Error('Purchase sign-in did not finish. Try again.');
+    return { previous, ent: entitlementsFrom(result.customerInfo) };
+  });
+  identityTail = run.catch(() => {}); return run;
+}
+export function disconnectPurchaseAccount() {
+  const run = identityTail.then(async () => {
+    if (configured && !(await Purchases.isAnonymous())) await Purchases.logOut();
+  });
+  identityTail = run.catch(() => {}); return run;
+}
 
 export function entitlementsFrom(info: CustomerInfo) {
   return { pro: !!info.entitlements.active[ENT_PRO], reportBuyer: !!info.entitlements.active[ENT_BUYER] };
@@ -65,6 +82,6 @@ export async function reportPrice(fallback: string): Promise<string> {
 /** RevenueCat's own paywall for the Pro plans. Returns true when the user bought or restored. */
 export async function showProPaywall(): Promise<boolean> {
   if (!configured) return false;
-  const r = await RevenueCatUI.presentPaywallIfNeeded({ requiredEntitlementIdentifier: ENT_PRO });
-  return r === PAYWALL_RESULT.PURCHASED || r === PAYWALL_RESULT.RESTORED || r === PAYWALL_RESULT.NOT_PRESENTED;
+  await RevenueCatUI.presentPaywallIfNeeded({ requiredEntitlementIdentifier: ENT_PRO });
+  return entitlementsFrom(await Purchases.getCustomerInfo()).pro;
 }

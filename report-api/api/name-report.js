@@ -5,38 +5,44 @@ const { Resend } = require('resend');
 const { buildHtml } = require('../lib/html');
 const { htmlToPdf } = require('../lib/render');
 const N = require('../lib/numerology');
-const { authorizeOrder } = require('../lib/purchases');
+const { authorizeOrder, withDeliveryLock, ledgerReady } = require('../lib/purchases');
+const { requireOwner, configured } = require('../lib/ownership');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function readiness() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.REVENUECAT_SECRET_KEY && configured() && ledgerReady());
+}
 const FROM = process.env.REPORT_FROM || 'Ank Numerology <reports@adiology.io>';
 const BRAND = 'Ank Numerology';
 
 function bad(res, code, msg) { res.status(code).json({ ok: false, error: msg }); }
 
-module.exports = async (req, res) => {
-  if (req.method === 'GET') return res.status(200).json({ ok: true, service: 'ank-name-report', status: 'up' });
+async function handle(req, res) {
+  if (req.method === 'GET') return res.status(200).json({ ok: true, service: 'ank-name-report', status: 'up', ready: readiness() });
   if (req.method !== 'POST') return bad(res, 405, 'method not allowed');
 
   let order = req.body;
   if (typeof order === 'string') { try { order = JSON.parse(order); } catch { return bad(res, 400, 'invalid json'); } }
   const p = order && order.profile;
   const email = order && order.email;
-  if (!p || !p.name || !p.day || !p.month || !p.year) return bad(res, 400, 'missing profile fields');
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(email))) return bad(res, 400, 'invalid email');
+  if (!p || typeof p.name !== 'string' || !p.name.trim() || p.name.length > 80 || ![p.day, p.month, p.year].every(Number.isInteger)) return bad(res, 400, 'invalid profile fields');
+  if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return bad(res, 400, 'invalid email');
   if (!N.isValidDate(p.day, p.month, p.year)) return bad(res, 400, 'invalid date of birth');
-  if (!process.env.RESEND_API_KEY) return bad(res, 500, 'email not configured');
-
-  // Payment gate: no verified purchase, no report (and no email is sent to the supplied address).
-  const auth = await authorizeOrder(order.appUserId, p);
-  if (!auth.ok) return bad(res, auth.status, auth.error);
+  if (!Number.isSafeInteger(order.createdAt) || order.createdAt < 0 || order.createdAt > Date.now() + 300_000) return bad(res, 400, 'invalid order date');
+  const owner = await requireOwner(req, order.appUserId);
+  if (!owner.ok) return bad(res, owner.status, owner.error);
+  if (!process.env.RESEND_API_KEY) return bad(res, 503, 'email not configured');
 
   try {
+    const auth = await authorizeOrder(owner.accountId, p, order);
+    if (!auth.ok) return bad(res, auth.status, auth.error);
+    if (auth.alreadySent) return res.status(202).json({ ok: true, queued: order.id, alreadyAccepted: true });
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const lang = normalizeLang(order.language);
     // English orders get the dense Complete Report built by the shared engine; other languages keep the localised report until translated.
     let htmlDoc;
     if (lang === 'en') {
       const [{ buildComplete }, { renderHtml }] = await Promise.all([import('../engine/engine/complete.ts'), import('../engine/engine/html.ts')]);
-      htmlDoc = renderHtml(buildComplete({ name: p.name, day: p.day, month: p.month, year: p.year }, new Date()), `Complete Report for ${p.name}`);
+      htmlDoc = renderHtml(buildComplete({ name: p.name, day: p.day, month: p.month, year: p.year }, new Date(order.createdAt)), `Complete Report for ${p.name}`);
     } else htmlDoc = buildHtml(p, lang);
     const pdf = await htmlToPdf(htmlDoc);
     const nameNum = N.chaldeanName(p.name).value;
@@ -61,14 +67,16 @@ module.exports = async (req, res) => {
       subject: `${BRAND} — Your Complete Report for ${p.name}`,
       html,
       attachments: [{ filename: `Ank-Complete-Report-${slug(p.name)}.pdf`, content: Buffer.from(pdf).toString('base64') }],
-    });
-    if (sent.error) return bad(res, 502, 'email send failed: ' + (sent.error.message || 'unknown'));
+    }, { idempotencyKey: auth.idempotencyKey });
+    if (sent.error || !sent.data?.id) return bad(res, 502, 'email service did not accept the report');
     await auth.claim();
     return res.status(202).json({ ok: true, id: sent.data && sent.data.id, queued: order.id });
   } catch (e) {
-    return bad(res, 500, 'report generation failed: ' + (e && e.message));
+    return bad(res, e.status === 503 ? 503 : 500, 'report service unavailable; your order can be retried');
   }
-};
+}
+module.exports = (req, res) => withDeliveryLock(() => handle(req, res));
+module.exports.readiness = readiness;
 
 const SUPPORTED = require('../lib/i18n').LABELS;
 function normalizeLang(raw) {

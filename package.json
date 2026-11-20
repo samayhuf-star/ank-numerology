@@ -38,7 +38,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "node --experimental-strip-types --test tests/numerology.test.ts tests/nudges.test.ts tests/logic.test.ts tests/i18n.test.ts tests/reading.test.ts tests/fullReport.test.ts tests/nameMatch.test.ts tests/dense.test.ts",
+    "test": "node --experimental-strip-types --test tests/numerology.test.ts tests/nudges.test.ts tests/logic.test.ts tests/i18n.test.ts tests/reading.test.ts tests/fullReport.test.ts tests/nameMatch.test.ts tests/dense.test.ts tests/delivery.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint"
   },

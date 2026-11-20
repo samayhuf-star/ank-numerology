@@ -1,0 +1,21 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { requireOwner } = require('../lib/ownership');
+test('reports use only a verified Cloud email identity, never the submitted RevenueCat ID', async t => {
+  const original = global.fetch;
+  t.after(() => { global.fetch = original; });
+  const req = { headers: { authorization: 'Bearer untrusted-token' } };
+  assert.equal((await requireOwner({ headers: {} }, 'owner-id')).status, 401);
+  let requested = '';
+  global.fetch = async url => { requested = url; return new Response(JSON.stringify({ id: 'verified-account', email: 'owner@example.com', email_confirmed_at: '2026-11-20T00:00:00Z', is_anonymous: false }), { status: 200 }); };
+  const owner = await requireOwner(req, 'different-submitted-user');
+  assert.equal(owner.ok, true);
+  assert.equal(owner.accountId, 'verified-account');
+  assert.match(requested, /\/auth\/v1\/user$/);
+  global.fetch = async () => new Response('{}', { status: 401 });
+  assert.equal((await requireOwner(req, 'owner-id')).status, 401);
+  global.fetch = async () => new Response(JSON.stringify({ id: 'owner-id', email: 'owner@example.com', is_anonymous: true }), { status: 200 });
+  assert.equal((await requireOwner(req, 'owner-id')).status, 401);
+  global.fetch = async () => { throw new Error('offline'); };
+  assert.equal((await requireOwner(req, 'owner-id')).status, 503);
+});

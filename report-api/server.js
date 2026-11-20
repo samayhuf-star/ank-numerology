@@ -19,7 +19,7 @@ const server = http.createServer((req, res) => {
   res.json = (o) => send(res, res.statusCode || 200, o);
 
   const url = (req.url || '/').split('?')[0];
-  if (url === '/' || url === '/health') return send(res, 200, { ok: true, service: 'ank-name-report', status: 'up' });
+  if (url === '/' || url === '/health' || url === '/api/health') return send(res, 200, { ok: true, service: 'ank-name-report', status: 'up', ready: handler.readiness() });
   const isRestore = url === '/api/purchased-reports' || url === '/purchased-reports';
   if (!isRestore && url !== '/api/name-report' && url !== '/name-report') return send(res, 404, { ok: false, error: 'not found' });
 

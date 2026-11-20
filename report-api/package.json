@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Ank Numerology — Name Report PDF + email backend",
+  "scripts": { "test": "node --test tests/*.test.js", "start": "node server.js", "init-ledger": "node init-ledger.js" },
   "dependencies": {
     "@fontsource/fraunces": "^5.3.0",
     "@fontsource/noto-sans": "^5.3.0",

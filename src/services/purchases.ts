@@ -10,7 +10,7 @@ export const ENT_PRO = 'pro';
 export const ENT_BUYER = 'report_buyer';
 export const OFFERING_NAME_REPORT = 'name_report';
 
-const KEYS = { ios: process.env.EXPO_PUBLIC_RC_IOS_KEY ?? 'appl_zRLFuqSZdmZsDPLrvakpgAPnzfI', android: process.env.EXPO_PUBLIC_RC_ANDROID_KEY ?? '' };
+const KEYS = { ios: process.env.EXPO_PUBLIC_RC_IOS_KEY ?? 'appl_zRLFuqSZdmZsDPLrvakpgAPnzfI', android: process.env.EXPO_PUBLIC_RC_ANDROID_KEY ?? 'goog_AErLeQiGkHfNxsCLupBebXnOxCg' };
 let configured = false;
 
 export function initPurchases(appUserId?: string) {

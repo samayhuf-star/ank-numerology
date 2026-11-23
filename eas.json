@@ -1,7 +1,15 @@
 {
-  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
   "build": {
-    "production": { "autoIncrement": true, "ios": { "resourceClass": "m-medium" } }
+    "production": {
+      "autoIncrement": true,
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    }
   },
   "submit": {
     "production": {
@@ -11,6 +19,10 @@
         "ascApiKeyPath": "/root/secrets/AuthKey_BTRUJV79QS.p8",
         "ascApiKeyId": "BTRUJV79QS",
         "ascApiKeyIssuerId": "c0c1fcaf-fffc-4623-ab2f-5e2c41779bf5"
+      },
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
       }
     }
   }

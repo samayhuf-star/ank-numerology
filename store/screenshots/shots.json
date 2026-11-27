@@ -1,0 +1,83 @@
+{
+ "out": "/home/dev/ios-publish/work/ank-numerology/store/screenshots",
+ "prefix": "ank",
+ "bg": [
+  "#262a5c",
+  "#0e1024"
+ ],
+ "accent": "#E9B85F",
+ "shots": [
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/u-t1.png",
+   "cap": [
+    "Your number",
+    "for today"
+   ],
+   "sub": "Good for, go easy on, lucky colour"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/u-r1.png",
+   "cap": [
+    "Your core numbers",
+    "in one minute"
+   ],
+   "sub": "Mulank, Bhagyank and name number"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/u-t2.png",
+   "cap": [
+    "Your Lo Shu grid,",
+    "read for you"
+   ],
+   "sub": "What you have and what is missing"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/u-r2.png",
+   "cap": [
+    "Every step",
+    "shown in full"
+   ],
+   "sub": "Check the working yourself"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/u-r3.png",
+   "cap": [
+    "Your destiny",
+    "number, explained"
+   ],
+   "sub": "Bhagyank, with the working"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/u-r4.png",
+   "cap": [
+    "Does your name",
+    "add up?"
+   ],
+   "sub": "Letter-by-letter name number"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/u-r6.png",
+   "cap": [
+    "Every day",
+    "this month"
+   ],
+   "sub": "Your personal day calendar"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/u-t4.png",
+   "cap": [
+    "Your next",
+    "12 months"
+   ],
+   "sub": "Month themes at a glance"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/ak/r-o7.png",
+   "cap": [
+    "Free to start,",
+    "no account"
+   ],
+   "sub": "Your profiles stay on your device"
+  }
+ ]
+}

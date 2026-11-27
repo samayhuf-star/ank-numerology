@@ -1,0 +1,35 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "categories": [
+      "LIFESTYLE",
+      "ENTERTAINMENT"
+    ],
+    "info": {
+      "en-US": {
+        "title": "Ank: Numerology Calculator",
+        "subtitle": "Lo Shu Grid, Name & Life Path",
+        "description": "See Vedic, Chaldean and Western numerology side by side. Enter your name and date of birth to get your Mulank, Bhagyank, life path and Lo Shu grid, with every letter and digit shown.\n\nFind your best days for starting, travelling or committing. Check a name spelling before you change it.\n\nStart with one full reading free. Lab Pro unlocks unlimited checks, household grids and pair cards. For reflection, not prediction.\n\nYOUR CORE NUMBERS\n• Mulank (root number) and Bhagyank (destiny number).\n• Your Chaldean name number and Western life path.\n• What each one means for personality, career, relationships and health — shown as reflection, not a forecast of events.\n\nYOUR LO SHU GRID\n• Your birth grid drawn out, with planes and arrows.\n• The numbers you have (your natural gifts) and the numbers you are missing (your lessons).\n\nNAME CHECKER\n• Test how a name or spelling works out against your birth numbers.\n• See each letter's value, step by step.\n\nYOUR FORECAST\n• Your Personal Year and where you are in the 9-year cycle.\n• A month-by-month outlook for the year ahead.\n\nEXPLORE (LAB PRO)\n• Compare Chaldean, Pythagorean and Vedic results for the same name, with the arithmetic shown.\n• Best days: dates in the next 60 days that suit starting, committing, travelling, meeting people or studying, based on your Personal Day numbers.\n• Household grid: combine family members' Lo Shu grids to see which numbers the home has and which are missing.\n• Daily practice: one small habit a day tied to a digit missing from your grid, with a streak counter.\n• Pair card: see which digits each of you supplies to the other, and share it.\n\nYOUR LUCKY GUIDE\n• Lucky colours, days, numbers, gemstone and direction.\n• Which numbers are friendly, neutral or challenging for you.\n\nWHY ANK NUMEROLOGY\n• Correct Chaldean letter values, no guesswork.\n• No ads, clean design, your profiles stay on your device.\n• Readings in English, with more Indian languages planned in the app. (The App Store language list is English today.)\n\nLAB PRO SUBSCRIPTION\nWeekly (7-day free trial), monthly, or yearly (3-day free trial). Prices may vary by country and are shown before you confirm. Payment is charged to your Apple ID at confirmation of purchase, or at the end of any free trial. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel any time in your App Store account settings.\n\nPrivacy Policy: https://klenzer.online/ank-numerology/privacy/\nTerms of Use: https://klenzer.online/ank-numerology/terms/\n\nAnk Numerology is made for reflection and entertainment. It does not predict events and is not a substitute for professional advice.",
+        "keywords": [
+          "vedic",
+          "chaldean",
+          "pythagorean",
+          "mulank",
+          "bhagyank",
+          "lucky",
+          "destiny",
+          "number",
+          "birth",
+          "date",
+          "days",
+          "expression",
+          "soul",
+          "urge"
+        ],
+        "promoText": "Enter your name and date of birth. Compare Vedic, Chaldean and Western numbers, see your Lo Shu grid, and pick better days to start things.",
+        "supportUrl": "https://klenzer.online/ank-numerology/support/",
+        "privacyPolicyUrl": "https://klenzer.online/ank-numerology/privacy/"
+      }
+    }
+  }
+}

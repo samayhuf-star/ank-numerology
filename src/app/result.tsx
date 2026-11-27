@@ -8,6 +8,7 @@ import { reading } from '../engine/reading';
 import { buildFreeFlow } from '../engine/freeFlow';
 import { canOpenFullReport } from '../logic/entitlements';
 import { C, F } from '../theme';
+import { noteSuccess } from '../lib/reviewPrompt';
 
 // The free reading is a short guided flow: one idea per card, the working shown, and a pitch under each card.
 // The last card is the offer. Paid users go straight to their Complete Report.
@@ -34,7 +35,7 @@ export default function Result() {
       <Card><Text style={{ fontFamily: F.serif, fontSize: 30, color: C.gold }}>{price}</Text><P size={13}>One payment for this profile. No subscription.</P></Card>
       {open ? <Button title="Open my Complete Report" onPress={() => router.push('/future-report')} /> : <Button title={`Get the Complete Report · ${price}`} onPress={unlock} />}
       <Button kind="ghost" title="Back" onPress={() => setI(i - 1)} />
-      <Button kind="ghost" title="Go to the app" onPress={() => router.replace('/(tabs)/today')} />
+      <Button kind="ghost" title="Go to the app" onPress={() => { noteSuccess(1); router.replace('/(tabs)/today'); }} />
     </Screen>);
 
   const c = cards[i];

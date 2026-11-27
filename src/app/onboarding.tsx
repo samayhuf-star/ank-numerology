@@ -17,7 +17,7 @@ import { setPushConsent } from '../services/push';
 import { C, F } from '../theme';
 
 const FOCUS = ['Career', 'Money', 'Relationships', 'Name change', 'Daily guidance', 'Lucky numbers', 'Business name'];
-/** Number of onboarding screens (read by the autopilot panel). */
+/** Number of onboarding screens (read by the autopilot panel): steps 0-8 plus the alerts screen. */
 export const ONBOARDING_SCREENS = 10;
 
 const DEMO = { 1: 1, 2: 1, 3: 1, 7: 1, 9: 2 } as Record<number, number>;
@@ -49,7 +49,8 @@ export default function Onboarding() {
     const usage = recordCheck(s.ent, s.usage, today); // the first, free check
     set({ onboarded: true, language: lang, focus, profiles: [{ id, name: name.trim(), day, month, year }], activeId: id,
       usage, notif: { daily, tips, time }, startDay: today, lastOpenDay: today });
-    router.replace('/result');
+    // Show the Pro plans once, right after onboarding; closing or buying continues to the first result.
+    router.replace({ pathname: '/paywall', params: { next: '/result' } });
   }
 
   const dots = <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>{Array.from({ length: ONBOARDING_SCREENS }).map((_, i) => <View key={i} style={{ width: i === step ? 20 : 6, height: 6, borderRadius: 3, backgroundColor: i === step ? C.gold : C.border }} />)}</View>;

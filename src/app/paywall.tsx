@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, H1, P, Screen } from '../components/ui';
 import { useStore } from '../store';
 import { useAuth } from '../services/auth';
@@ -12,6 +12,9 @@ import { C, F } from '../theme';
 // is the fallback when the offering can't be loaded). The Name Report stays a separate consumable. Restore is always available.
 export default function Paywall() {
   const router = useRouter(); const { s, set } = useStore();
+  // Opened from onboarding with ?next=/result: there is no screen to go back to, so leaving goes forward instead.
+  const { next } = useLocalSearchParams<{ next?: string }>();
+  const leave = () => { if (next === '/result') router.replace('/result'); else router.back(); };
   const auth = useAuth();
   const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
@@ -20,14 +23,14 @@ export default function Paywall() {
   async function buy() {
     const plan = plans.find((p) => p.key === pick); if (!plan || inFlight.current) return;
     inFlight.current = true; setBusy(true); setMsg('');
-    try { const r = await buyPlan(plan.pkg); if (r.ok) { const e = await apply(); if (e?.pro) router.back(); } else if (!r.cancelled) setMsg(r.message ?? 'Purchase failed'); }
+    try { const r = await buyPlan(plan.pkg); if (r.ok) { const e = await apply(); if (e?.pro) leave(); } else if (!r.cancelled) setMsg(r.message ?? 'Purchase failed'); }
     finally { inFlight.current = false; setBusy(false); }
   }
   async function apply() { const e = await refreshEntitlements(); if (e) set((c) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || c.ent.reportBuyer } })); return e; }
   async function open() {
     if (inFlight.current) return;
     inFlight.current = true; setBusy(true); setMsg('');
-    try { if (!purchasesReady()) { setMsg('Purchases are not set up in this build yet.'); return; } await showProPaywall(); const e = await apply(); if (e?.pro) router.back(); }
+    try { if (!purchasesReady()) { setMsg('Purchases are not set up in this build yet.'); return; } await showProPaywall(); const e = await apply(); if (e?.pro) leave(); }
     catch (e: any) { setMsg(e?.message ?? 'Something went wrong. Please try again.'); } finally { inFlight.current = false; setBusy(false); }
   }
   async function doRestore() {
@@ -55,5 +58,5 @@ export default function Paywall() {
         return <Pressable key={p.key} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => setPick(p.key)} style={{ borderWidth: 1, borderColor: on ? C.gold : C.border, borderRadius: 14, padding: 14, backgroundColor: C.card }}>
           <Text style={{ fontFamily: F.sansSemi, color: C.text, fontSize: 16 }}>{p.label} · {p.pkg.product.priceString}</Text>
           <Text style={{ fontFamily: F.sans, color: C.muted, fontSize: 13 }}>{period}{intro && intro.price === 0 ? ` · ${intro.periodNumberOfUnits}-${intro.periodUnit.toLowerCase()} free trial` : ''}</Text></Pressable>; })}
-      {plans.length ? <Button title={pick === 'lifetime' ? 'Buy Lifetime' : 'Continue'} disabled={busy} onPress={buy} /> : <Button title="See Pro plans" disabled={busy} onPress={open} />}<Button kind="ghost" title="Restore Purchases" disabled={busy} onPress={doRestore} /><Button kind="ghost" title={auth.account ? 'Manage account' : 'Sign in to restore reports'} disabled={busy} onPress={() => router.push('/account')} /><Button kind="ghost" title="Close" disabled={busy} onPress={() => router.back()} /></Screen>);
+      {plans.length ? <Button title={pick === 'lifetime' ? 'Buy Lifetime' : 'Continue'} disabled={busy} onPress={buy} /> : <Button title="See Pro plans" disabled={busy} onPress={open} />}<Button kind="ghost" title="Restore Purchases" disabled={busy} onPress={doRestore} /><Button kind="ghost" title={auth.account ? 'Manage account' : 'Sign in to restore reports'} disabled={busy} onPress={() => router.push('/account')} /><Button kind="ghost" title={next ? 'Not now' : 'Close'} disabled={busy} onPress={leave} /></Screen>);
 }

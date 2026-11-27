@@ -1,19 +1,28 @@
-import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Text } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, H1, P, Screen } from '../components/ui';
 import { useStore } from '../store';
 import { useAuth } from '../services/auth';
 import { restoreReports } from '../services/restoreReports';
-import { purchasesReady, refreshEntitlements, restore, showProPaywall } from '../services/purchases';
+import { buyPlan, proPlans, purchasesReady, refreshEntitlements, restore, showProPaywall, type ProPlan } from '../services/purchases';
 import { C, F } from '../theme';
 
-// Pro plans are shown with RevenueCat's own paywall. Restore Purchases is always available.
+// Pro plans: weekly, monthly, annual and lifetime from the RevenueCat "default" offering (RevenueCat's own paywall
+// is the fallback when the offering can't be loaded). The Name Report stays a separate consumable. Restore is always available.
 export default function Paywall() {
   const router = useRouter(); const { s, set } = useStore();
   const auth = useAuth();
   const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  const [plans, setPlans] = useState<ProPlan[]>([]); const [pick, setPick] = useState<ProPlan['key']>('annual');
+  useEffect(() => { proPlans().then((p) => { setPlans(p); if (p.length && !p.some((x) => x.key === 'annual')) setPick(p[0].key); }); }, []);
+  async function buy() {
+    const plan = plans.find((p) => p.key === pick); if (!plan || inFlight.current) return;
+    inFlight.current = true; setBusy(true); setMsg('');
+    try { const r = await buyPlan(plan.pkg); if (r.ok) { const e = await apply(); if (e?.pro) router.back(); } else if (!r.cancelled) setMsg(r.message ?? 'Purchase failed'); }
+    finally { inFlight.current = false; setBusy(false); }
+  }
   async function apply() { const e = await refreshEntitlements(); if (e) set((c) => ({ ent: { pro: e.pro, reportBuyer: e.reportBuyer || c.ent.reportBuyer } })); return e; }
   async function open() {
     if (inFlight.current) return;
@@ -42,5 +51,9 @@ export default function Paywall() {
     <Screen><H1>Ank Pro</H1><P>Unlimited checks for every profile. See plans for the current App Store price, billing period and any trial you’re eligible for before confirming. Cancel in your App Store subscription settings.</P>
       {busy ? <ActivityIndicator color={C.gold} /> : null}
       {msg ? <Text accessibilityRole="alert" style={{ color: C.muted, fontFamily: F.sans }}>{msg}</Text> : null}
-      <Button title="See Pro plans" disabled={busy} onPress={open} /><Button kind="ghost" title="Restore Purchases" disabled={busy} onPress={doRestore} /><Button kind="ghost" title={auth.account ? 'Manage account' : 'Sign in to restore reports'} disabled={busy} onPress={() => router.push('/account')} /><Button kind="ghost" title="Close" disabled={busy} onPress={() => router.back()} /></Screen>);
+      {plans.map((p) => { const on = p.key === pick; const intro = p.pkg.product.introPrice; const period = p.key === 'lifetime' ? 'one-time, yours forever' : p.key === 'annual' ? 'per year' : p.key === 'monthly' ? 'per month' : 'per week';
+        return <Pressable key={p.key} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => setPick(p.key)} style={{ borderWidth: 1, borderColor: on ? C.gold : C.border, borderRadius: 14, padding: 14, backgroundColor: C.card }}>
+          <Text style={{ fontFamily: F.sansSemi, color: C.text, fontSize: 16 }}>{p.label} · {p.pkg.product.priceString}</Text>
+          <Text style={{ fontFamily: F.sans, color: C.muted, fontSize: 13 }}>{period}{intro && intro.price === 0 ? ` · ${intro.periodNumberOfUnits}-${intro.periodUnit.toLowerCase()} free trial` : ''}</Text></Pressable>; })}
+      {plans.length ? <Button title={pick === 'lifetime' ? 'Buy Lifetime' : 'Continue'} disabled={busy} onPress={buy} /> : <Button title="See Pro plans" disabled={busy} onPress={open} />}<Button kind="ghost" title="Restore Purchases" disabled={busy} onPress={doRestore} /><Button kind="ghost" title={auth.account ? 'Manage account' : 'Sign in to restore reports'} disabled={busy} onPress={() => router.push('/account')} /><Button kind="ghost" title="Close" disabled={busy} onPress={() => router.back()} /></Screen>);
 }

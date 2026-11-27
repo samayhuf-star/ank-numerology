@@ -9,6 +9,7 @@ import { AppState, I18nManager } from 'react-native';
 import { StoreProvider, useStore } from '../store';
 import { AuthProvider, useAuth } from '../services/auth';
 import { initPurchases, refreshEntitlements } from '../services/purchases';
+import { initPush } from '../services/push';
 import { restoreReports } from '../services/restoreReports';
 import { reschedule } from '../services/notifications';
 import { flush } from '../services/reportApi';
@@ -42,6 +43,9 @@ function Boot() {
   const [fontsLoaded] = useFonts({ Fraunces_700Bold, Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
 
   useEffect(() => { if (fontsLoaded && s.loaded) SplashScreen.hideAsync().catch(() => {}); }, [fontsLoaded, s.loaded]);
+
+  // OneSignal starts only with consent required; consent follows the user's tips choice.
+  useEffect(() => { if (s.loaded) initPush(s.notif.tips === 'yes'); }, [s.loaded, s.notif.tips]);
 
   // Right-to-left languages (Urdu, Sindhi). Takes effect on next launch on native.
   useEffect(() => {

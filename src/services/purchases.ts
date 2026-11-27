@@ -3,7 +3,8 @@ import Purchases, { LOG_LEVEL, type CustomerInfo, type PurchasesPackage } from '
 import RevenueCatUI from 'react-native-purchases-ui';
 
 // RevenueCat setup (create these in the dashboard before TestFlight):
-//  Entitlement "pro"            -> yearly + monthly subscriptions (offering "default", shown with RevenueCat's own paywall)
+//  Entitlement "pro"            -> weekly + monthly + annual subscriptions + lifetime (offering "default":
+//                                  ank_pro_weekly, ank_pro_monthly, ank_pro_yearly, ank_pro_lifetime non-consumable)
 //  Entitlement "report_buyer"   -> granted on first Name Report purchase (promotional, lifetime)
 //  Offering "name_report"       -> one package, product "ank_name_report" (Complete Report): Rs 499 India, $9.99 rest of world
 export const ENT_PRO = 'pro';
@@ -84,4 +85,26 @@ export async function showProPaywall(): Promise<boolean> {
   if (!configured) return false;
   await RevenueCatUI.presentPaywallIfNeeded({ requiredEntitlementIdentifier: ENT_PRO });
   return entitlementsFrom(await Purchases.getCustomerInfo()).pro;
+}
+
+export type ProPlan = { key: 'weekly' | 'monthly' | 'annual' | 'lifetime'; label: string; pkg: PurchasesPackage };
+const PLAN_ORDER: [ProPlan['key'], string, string][] = [['weekly', 'WEEKLY', 'Weekly'], ['monthly', 'MONTHLY', 'Monthly'], ['annual', 'ANNUAL', 'Yearly'], ['lifetime', 'LIFETIME', 'Lifetime']];
+
+/** Pro plans from the "default" offering, in the order weekly, monthly, annual, lifetime. */
+export async function proPlans(): Promise<ProPlan[]> {
+  if (!configured) return [];
+  try {
+    const cur = (await Purchases.getOfferings()).current;
+    if (!cur) return [];
+    return PLAN_ORDER.flatMap(([key, type, label]) => {
+      const pkg = cur.availablePackages.find((p) => p.packageType === type) ?? cur.availablePackages.find((p) => p.product.identifier.includes(key === 'annual' ? 'year' : key));
+      return pkg ? [{ key, label, pkg }] : [];
+    });
+  } catch { return []; }
+}
+
+export async function buyPlan(pkg: PurchasesPackage): Promise<BuyResult> {
+  if (!configured) return { ok: false, cancelled: false, message: 'Purchases are not set up in this build.' };
+  try { await Purchases.purchasePackage(pkg); return { ok: true }; }
+  catch (e: any) { return { ok: false, cancelled: !!e?.userCancelled, message: e?.userCancelled ? undefined : (e?.message ?? 'Purchase failed') }; }
 }

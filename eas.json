@@ -1,7 +1,18 @@
 {
-  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
   "build": {
-    "production": { "autoIncrement": true, "ios": { "resourceClass": "m-medium" } }
+    "production": {
+      "autoIncrement": true,
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_ONESIGNAL_APP_ID": "6d429b65-b452-457f-82c8-f42e439570c7"
+      }
+    }
   },
   "submit": {
     "production": {

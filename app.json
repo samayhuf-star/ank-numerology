@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ank Numerology",
     "slug": "ank-numerology",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -10,7 +10,13 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.samay.ank",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      },
+      "entitlements": {
+        "aps-environment": "production"
       }
     },
     "android": {
@@ -27,6 +33,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "production",
+          "disableLocation": true
+        }
+      ],
       "expo-router",
       "expo-localization",
       "expo-font",

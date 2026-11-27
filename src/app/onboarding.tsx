@@ -9,13 +9,17 @@ import { t } from '../i18n';
 import { LANGUAGES } from '../i18n/languages';
 import { coverage } from '../i18n';
 import { fromLocale } from '../i18n';
-import { isValidDate } from '../engine/numerology';
+import { bhagyank, isValidDate, loShuGrid, mulank } from '../engine/numerology';
 import { canCheck, recordCheck } from '../logic/entitlements';
 import { daysIndex } from '../engine/cycles';
 import { requestPermission } from '../services/notifications';
+import { setPushConsent } from '../services/push';
 import { C, F } from '../theme';
 
 const FOCUS = ['Career', 'Money', 'Relationships', 'Name change', 'Daily guidance', 'Lucky numbers', 'Business name'];
+/** Number of onboarding screens (read by the autopilot panel). */
+export const ONBOARDING_SCREENS = 10;
+
 const DEMO = { 1: 1, 2: 1, 3: 1, 7: 1, 9: 2 } as Record<number, number>;
 
 export default function Onboarding() {
@@ -39,6 +43,7 @@ export default function Onboarding() {
 
   async function finish() {
     if (daily || tips === 'yes') await requestPermission().catch(() => false);
+    setPushConsent(tips === 'yes');
     const today = daysIndex(new Date());
     const id = `p${Date.now()}`;
     const usage = recordCheck(s.ent, s.usage, today); // the first, free check
@@ -47,26 +52,31 @@ export default function Onboarding() {
     router.replace('/result');
   }
 
-  const dots = <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>{Array.from({ length: 8 }).map((_, i) => <View key={i} style={{ width: i === step ? 20 : 6, height: 6, borderRadius: 3, backgroundColor: i === step ? C.gold : C.border }} />)}</View>;
+  const dots = <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>{Array.from({ length: ONBOARDING_SCREENS }).map((_, i) => <View key={i} style={{ width: i === step ? 20 : 6, height: 6, borderRadius: 3, backgroundColor: i === step ? C.gold : C.border }} />)}</View>;
 
   if (step === 0) return (
     <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}>
       <View style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: F.serif, fontSize: 40, color: C.gold }}>9</Text></View>
       <H1>{L('welcome.title')}</H1><P>{L('welcome.body')}</P></View>
-      {dots}<Button title={L('next')} onPress={next} /><Button kind="ghost" title={L('skip')} onPress={() => setStep(3)} /></Screen>);
+      {dots}<Button title={L('next')} onPress={next} /><Button kind="ghost" title={L('skip')} onPress={() => setStep(4)} /></Screen>);
   if (step === 1) return (
     <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}><Card><LoShuGridView counts={DEMO} /></Card><H1>{L('intro2.title')}</H1><P>{L('intro2.body')}</P></View>
-      {dots}<Button title={L('next')} onPress={next} /><Button kind="ghost" title={L('skip')} onPress={() => setStep(3)} /></Screen>);
+      {dots}<Button title={L('next')} onPress={next} /><Button kind="ghost" title={L('skip')} onPress={() => setStep(4)} /></Screen>);
   if (step === 2) return (
+    <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}>
+      <Card><P muted={false}>{L('how.birth')}</P><P muted={false}>{L('how.destiny')}</P><P muted={false}>{L('how.name')}</P></Card>
+      <H1>{L('how.title')}</H1><P>{L('how.body')}</P></View>
+      {dots}<Button title={L('next')} onPress={next} /><Button kind="ghost" title={L('skip')} onPress={() => setStep(4)} /></Screen>);
+  if (step === 3) return (
     <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}>
       <Card><P muted={false}>{L('intro3.free')}</P><P muted={false}>{L('intro3.report')}</P><P muted={false}>{L('intro3.pro')}</P></Card>
       <H1>{L('intro3.title')}</H1><P>{L('intro3.body')}</P></View>
       {dots}<Button title={L('begin')} onPress={next} /></Screen>);
-  if (step === 3) return (
+  if (step === 4) return (
     <Screen><H1>{L('name.title')}</H1><P>{L('name.body')}</P>
       <Field label={L('name.field')} value={name} onChangeText={setName} autoCapitalize="words" autoComplete="name" textContentType="name" returnKeyType="next" />
       <P size={12}>{L('name.hint')}</P><View style={{ flex: 1 }} /><Button title={L('continue')} disabled={!nameOk} onPress={next} /></Screen>);
-  if (step === 4) return (
+  if (step === 5) return (
     <Screen><H1>{L('dob.title')}</H1><P>{L('dob.body')}</P>
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1 }}><Field label={L('dob.day')} value={d} onChangeText={(v) => setD(v.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" maxLength={2} /></View>
@@ -75,12 +85,17 @@ export default function Onboarding() {
       </View>
       {d && m && y.length === 4 && !dateOk ? <Text accessibilityRole="alert" style={{ color: C.warn, fontFamily: F.sans }}>{L('dob.error')}</Text> : null}
       <View style={{ flex: 1 }} /><Button title={L('continue')} disabled={!dateOk} onPress={next} /></Screen>);
-  if (step === 5) return (
+  if (step === 6) return (
+    <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}><Card><LoShuGridView counts={loShuGrid(day, month, year)} /></Card>
+      <H1>{L('preview.title')}</H1>
+      <P muted={false}>{t(lang, 'preview.body', { birth: mulank(day), destiny: bhagyank(day, month, year) })}</P><P size={12}>{L('preview.note')}</P></View>
+      {dots}<Button title={L('continue')} onPress={next} /></Screen>);
+  if (step === 7) return (
     <Screen><H1>{L('lang.title')}</H1><P>{L('lang.body')}</P>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{LANGUAGES.map((l) => <Chip key={l.code} label={l.native} on={lang === l.code} onPress={() => setLang(l.code)} />)}</View>
       {coverage(lang) < 1 ? <Text style={{ color: '#8a8aa0', fontSize: 12, marginTop: 8 }}>App screens for this language are still being translated and show in English for now. You can still order your Name Report in it where available.</Text> : null}
       <P size={12}>{L('lang.note')}</P><Button title={L('continue')} onPress={next} /></Screen>);
-  if (step === 6) return (
+  if (step === 8) return (
     <Screen><H1>{L('focus.title')}</H1><P>{L('focus.body')}</P>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{FOCUS.map((f) => <Chip key={f} label={f} on={focus.includes(f)} onPress={() => setFocus((x) => x.includes(f) ? x.filter((i) => i !== f) : [...x, f])} />)}</View>
       <View style={{ flex: 1 }} /><Button title={L('continue')} onPress={next} /></Screen>);

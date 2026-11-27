@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Linking, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { setPushConsent } from '../services/push';
 import { Button, Card, Chip, H1, P, Screen } from '../components/ui';
 import { useStore, freshState } from '../store';
 import { LANGUAGES } from '../i18n/languages';
@@ -23,7 +24,7 @@ export default function Settings() {
     } catch { setError('We couldn’t clear reminders. Your saved profiles have not been removed. Try again.'); }
     finally { setBusy(false); }
   }
-  const setNotif = async (p: Partial<typeof s.notif>) => { if ((p.daily || p.tips === 'yes') && !(await requestPermission())) return; set({ notif: { ...s.notif, ...p } }); };
+  const setNotif = async (p: Partial<typeof s.notif>) => { if ((p.daily || p.tips === 'yes') && !(await requestPermission())) return; set({ notif: { ...s.notif, ...p } }); if (p.tips) setPushConsent(p.tips === 'yes'); };
   return (
     <Screen><H1>Settings</H1>
       <Card><P muted={false}>Your report account</P><P>Verify your email to buy and restore reports. Free readings remain available without signing in.</P><Button title="Manage email sign-in" onPress={() => router.push('/account')} /></Card>

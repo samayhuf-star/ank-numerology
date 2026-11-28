@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, ViewStyle, TextInput, TextInputProps } from 'react-native';
+import { FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View, ViewStyle, TextInput, TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { C, F } from '../theme';
 
@@ -41,6 +41,37 @@ export function Field({ label, ...rest }: { label: string } & TextInputProps) {
       <Text style={{ fontFamily: F.sansSemi, fontSize: 13, color: C.muted }}>{label}</Text>
       <TextInput accessibilityLabel={label} placeholderTextColor={C.border} {...rest}
         style={{ height: 52, borderRadius: 14, borderWidth: 1, borderColor: C.border, backgroundColor: C.card, color: C.text, fontSize: 17, paddingHorizontal: 16, fontFamily: F.sans }} />
+    </View>
+  );
+}
+/** Tap-to-choose list in a bottom sheet. Nothing to type, so nothing can be mistyped. Shows `error` in red under the box. */
+export function Picker({ label, value, options, onChange, display, error, placeholder = 'Select' }: { label: string; value: string; options: string[]; onChange: (v: string) => void; display?: (v: string) => string; error?: string; placeholder?: string }) {
+  const [open, setOpen] = React.useState(false);
+  const show = (v: string) => (display ? display(v) : v);
+  return (
+    <View style={{ flex: 1, gap: 6 }}>
+      <Text style={{ fontFamily: F.sansSemi, fontSize: 13, color: C.muted }}>{label}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={() => setOpen(true)}
+        style={{ height: 52, borderRadius: 14, borderWidth: error ? 2 : 1, borderColor: error ? '#E5484D' : C.border, backgroundColor: C.card, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text numberOfLines={1} style={{ fontFamily: F.sans, fontSize: 17, color: value ? C.text : C.muted, flex: 1 }}>{value ? show(value) : placeholder}</Text>
+        <Text style={{ color: C.muted }}>▾</Text>
+      </Pressable>
+      {error ? <Text accessibilityRole="alert" style={{ color: '#E5484D', fontSize: 12, fontFamily: F.sans }}>{error}</Text> : null}
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: '#000A' }]} onPress={() => setOpen(false)} />
+          <View style={{ maxHeight: '70%', backgroundColor: C.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16, paddingBottom: 28 }}>
+            <Text style={{ fontFamily: F.sansSemi, fontSize: 18, color: C.text, marginBottom: 8 }}>{label}</Text>
+            <FlatList data={options} keyExtractor={(x) => x} initialNumToRender={24}
+              initialScrollIndex={Math.max(0, options.indexOf(value))} getItemLayout={(_, i) => ({ length: 48, offset: 48 * i, index: i })}
+              renderItem={({ item }) => (
+                <Pressable accessibilityRole="button" onPress={() => { onChange(item); setOpen(false); }} style={{ height: 48, justifyContent: 'center', paddingHorizontal: 8, backgroundColor: item === value ? C.bg : 'transparent', borderRadius: 10 }}>
+                  <Text style={{ fontFamily: F.sans, fontSize: 17, color: item === value ? C.gold : C.text }}>{show(item)}</Text>
+                </Pressable>
+              )} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

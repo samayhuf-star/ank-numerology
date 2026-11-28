@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Localization from 'expo-localization';
-import { Button, Card, Chip, Field, H1, P, Screen } from '../components/ui';
+import { Button, Card, Chip, Field, H1, P, Picker, Screen } from '../components/ui';
 import { LoShuGridView } from '../components/ui';
 import { useStore } from '../store';
 import { t } from '../i18n';
@@ -33,12 +33,21 @@ export default function Onboarding() {
   const [daily, setDaily] = useState(true);
   const [tips, setTips] = useState<'unset' | 'yes' | 'no'>('unset');
   const [time, setTime] = useState('08:00');
+  const [tried, setTried] = useState(false);
   const L = (k: Parameters<typeof t>[1]) => t(lang, k);
 
   const day = parseInt(d, 10), month = parseInt(m, 10), year = parseInt(y, 10);
   const dateOk = isValidDate(day, month, year) && year >= 1900 && year <= new Date().getFullYear();
   const nameOk = name.replace(/[^A-Za-z]/g, '').length >= 2;
   const timeOk = /^([01]?\d|2[0-3]):[0-5]\d$/.test(time);
+  const [hh, mm] = time.split(':');
+  const dim = (month >= 1 && month <= 12 && year >= 1900) ? new Date(Date.UTC(year, month, 0)).getUTCDate() : 31;
+  const monthName = (n: string) => new Date(2000, +n - 1, 1).toLocaleString(lang, { month: 'long' });
+  const dobErr = (tried && !dateOk) ? {
+    day: !d ? L('dob.pickDay') : (day > dim ? L('dob.error') : undefined),
+    month: !m ? L('dob.pickMonth') : undefined,
+    year: !y ? L('dob.pickYear') : (dateOk ? undefined : L('dob.error')),
+  } : {} as Record<string, string | undefined>;
   const next = () => setStep((x) => x + 1);
 
   async function finish() {
@@ -79,12 +88,12 @@ export default function Onboarding() {
   if (step === 5) return (
     <Screen><H1>{L('dob.title')}</H1><P>{L('dob.body')}</P>
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <View style={{ flex: 1 }}><Field label={L('dob.day')} value={d} onChangeText={(v) => setD(v.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" maxLength={2} /></View>
-        <View style={{ flex: 1 }}><Field label={L('dob.month')} value={m} onChangeText={(v) => setM(v.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" maxLength={2} /></View>
-        <View style={{ flex: 1.4 }}><Field label={L('dob.year')} value={y} onChangeText={(v) => setY(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" maxLength={4} /></View>
+        <Picker label={L('dob.day')} value={d} options={Array.from({ length: dim }, (_, i) => String(i + 1))} onChange={setD} error={dobErr.day} />
+        <Picker label={L('dob.month')} value={m} options={Array.from({ length: 12 }, (_, i) => String(i + 1))} display={monthName} onChange={setM} error={dobErr.month} />
+        <Picker label={L('dob.year')} value={y} options={Array.from({ length: new Date().getFullYear() - 1899 }, (_, i) => String(new Date().getFullYear() - i))} onChange={setY} error={dobErr.year} />
       </View>
-      {d && m && y.length === 4 && !dateOk ? <Text accessibilityRole="alert" style={{ color: C.warn, fontFamily: F.sans }}>{L('dob.error')}</Text> : null}
-      <View style={{ flex: 1 }} /><Button title={L('continue')} disabled={!dateOk} onPress={next} /></Screen>);
+      {tried && !dateOk ? <Text accessibilityRole="alert" style={{ color: '#E5484D', fontFamily: F.sansSemi }}>{L('dob.fix')}</Text> : null}
+      <View style={{ flex: 1 }} /><Button title={L('continue')} onPress={() => { if (dateOk) { setTried(false); next(); } else setTried(true); }} /></Screen>);
   if (step === 6) return (
     <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}><Card><LoShuGridView counts={loShuGrid(day, month, year)} /></Card>
       <H1>{L('preview.title')}</H1>
@@ -105,6 +114,10 @@ export default function Onboarding() {
         <Switch accessibilityLabel={L('alerts.daily')} value={daily} onValueChange={setDaily} trackColor={{ true: C.gold, false: C.border }} /></View></Card>
       <Card><Text style={{ fontFamily: F.sansSemi, color: C.text, fontSize: 16 }}>{L('alerts.tips')}</Text><P size={13}>{L('alerts.tipsBody')}</P>
         <View style={{ flexDirection: 'row', gap: 8 }}><Chip label={L('alerts.yes')} on={tips === 'yes'} onPress={() => setTips('yes')} /><Chip label={L('alerts.no')} on={tips === 'no'} onPress={() => setTips('no')} /></View></Card>
-      <Field label={`${L('alerts.time')} (24h, HH:MM)`} value={time} onChangeText={setTime} keyboardType="numbers-and-punctuation" maxLength={5} />
-      <View style={{ flex: 1 }} /><Button title={L('continue')} disabled={!timeOk || tips === 'unset'} onPress={finish} /></Screen>);
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Picker label={`${L('alerts.time')}: ${L('alerts.hour')}`} value={hh} options={Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))} onChange={(v) => setTime(`${v}:${mm || '00'}`)} error={tried && !timeOk ? L('alerts.pickTime') : undefined} />
+        <Picker label={L('alerts.minute')} value={mm} options={Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))} onChange={(v) => setTime(`${hh || '08'}:${v}`)} error={tried && !timeOk ? L('alerts.pickTime') : undefined} />
+      </View>
+      {tried && tips === 'unset' ? <Text accessibilityRole="alert" style={{ color: '#E5484D', fontFamily: F.sans }}>{L('alerts.pickTips')}</Text> : null}
+      <View style={{ flex: 1 }} /><Button title={L('continue')} onPress={() => { if (timeOk && tips !== 'unset') finish(); else setTried(true); }} /></Screen>);
 }

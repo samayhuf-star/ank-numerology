@@ -1,3 +1,4 @@
+import { goalLines } from '../logic/goal';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -48,7 +49,7 @@ export default function Paywall() {
   }
   // Do not open a purchase sheet automatically when the user came here to restore.
   return (
-    <Screen><H1>Ank Pro</H1><P>Unlimited checks for every profile. See plans for the current App Store price, billing period and any trial you’re eligible for before confirming. Cancel in your App Store subscription settings.</P>
+    <Screen><H1>Ank Pro</H1>{goalLines(s.onb?.goal) ? <P muted={false}>{goalLines(s.onb?.goal)!.pro}</P> : null}<P>Unlimited checks for every profile. See plans for the current App Store price, billing period and any trial you’re eligible for before confirming. Cancel in your App Store subscription settings.</P>
       {busy ? <ActivityIndicator color={C.gold} /> : null}
       {msg ? <Text accessibilityRole="alert" style={{ color: C.muted, fontFamily: F.sans }}>{msg}</Text> : null}
       {plans.map((p) => { const on = p.key === pick; const intro = p.pkg.product.introPrice; const period = p.key === 'lifetime' ? 'one-time, yours forever' : p.key === 'annual' ? 'per year' : p.key === 'monthly' ? 'per month' : 'per week';

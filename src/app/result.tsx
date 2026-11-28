@@ -7,6 +7,7 @@ import { useStore } from '../store';
 import { reading } from '../engine/reading';
 import { buildFreeFlow } from '../engine/freeFlow';
 import { canOpenFullReport } from '../logic/entitlements';
+import { goalLines } from '../logic/goal';
 import { C, F } from '../theme';
 
 // The free reading is a short guided flow: one idea per card, the working shown, and a pitch under each card.
@@ -23,11 +24,13 @@ export default function Result() {
   const last = cards.length; // index of the offer card
   const r = reading(active, now);
   const unlock = () => router.push('/name-report');
+  const g = goalLines(s.onb?.goal);
 
   if (i === last) return (
     <Screen>
       <Eyebrow>Your Complete Report</Eyebrow>
       <H1>{`${active.name.split(' ')[0]}, your full report is ready`}</H1>
+      {g ? <P muted={false}>{g.offer}</P> : null}
       <Card gold>
         {['Part 1: your name worked out letter by letter and matched against your birth numbers, with spelling options', 'Part 2: your past, this year, each month, the next five years, career, money, love and health', 'A 30-day action plan and lucky dates', 'Opens in the app and can be emailed as a PDF in your language'].map((x) => <P key={x} muted={false}>{`\u2022 ${x}`}</P>)}
       </Card>
@@ -43,6 +46,7 @@ export default function Result() {
       <View style={{ height: 4, backgroundColor: C.soft, borderRadius: 2 }}><View style={{ height: 4, width: `${((i + 1) / (cards.length + 1)) * 100}%`, backgroundColor: C.gold, borderRadius: 2 }} /></View>
       <Eyebrow>{c.kicker}</Eyebrow>
       <H1>{c.title}</H1>
+      {i === 0 && g ? <Card gold><P muted={false}>{g.first}</P></Card> : null}
       <Blocks blocks={c.blocks} />
       {c.grid ? <Card><View style={{ alignItems: 'center' }}><LoShuGridView counts={r.counts} size={54} /></View></Card> : null}
       {!open && i > 1 ? <PitchStrip onPress={unlock} /> : null}

@@ -1,5 +1,12 @@
 // UI strings. English is complete. Other languages are filled in by the translation pipeline and fall back to English until reviewed.
 export const en = {
+  'q.goal.title': 'What brings you to numerology?', 'q.goal.body': 'Pick the one that fits best. We will lead with it.',
+  'q.goal.career': 'A career or job decision', 'q.goal.love': 'Love, marriage or compatibility', 'q.goal.money': 'Money or business', 'q.goal.name': 'Choosing a name', 'q.goal.curious': 'Just curious about my numbers',
+  'q.exp.title': 'Have you tried numerology before?', 'q.exp.body': 'This sets how much we explain.',
+  'q.exp.never': 'Never, I am new', 'q.exp.some': 'A little', 'q.exp.regular': 'Yes, I follow it regularly',
+  'q.plan.title': 'Are you thinking of changing or choosing a name?', 'q.plan.body': 'Your own name, a baby name or a business name.',
+  'q.plan.yes': 'Yes', 'q.plan.maybe': 'Maybe later', 'q.plan.no': 'No', 'q.pick': 'Pick one to continue.',
+  'preview.goal': 'You are here for: {goal}.', 'preview.plan': 'You are thinking about a name, so the Name Report is worth a look.',
   'welcome.title': 'Know your numbers.',
   'welcome.body': 'Your birth number, your year ahead and your name, worked out step by step so you can see how.',
   'intro2.title': 'Built around your Lo Shu grid.',

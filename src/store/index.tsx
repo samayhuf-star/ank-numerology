@@ -12,6 +12,8 @@ export type Profile = { id: string; name: string; day: number; month: number; ye
 export type Notif = { daily: boolean; tips: 'unset' | 'yes' | 'no'; time: string };
 export type State = {
   loaded: boolean; onboarded: boolean; language: string; focus: string[];
+  /** Onboarding answers (goal, experience, name plan). Optional so old saved state still loads. */
+  onb?: Record<string, string>;
   profiles: Profile[]; activeId: string | null;
   usage: Usage; ent: Entitlements; paidProfiles: string[]; unusedReports: number;
   notif: Notif; startDay: number; lastOpenDay: number; email: string;

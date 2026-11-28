@@ -34,6 +34,7 @@ export default function Onboarding() {
   const [tips, setTips] = useState<'unset' | 'yes' | 'no'>('unset');
   const [time, setTime] = useState('08:00');
   const [tried, setTried] = useState(false);
+  const [onb, setOnb] = useState<Record<string, string>>({});
   const L = (k: Parameters<typeof t>[1]) => t(lang, k);
 
   const day = parseInt(d, 10), month = parseInt(m, 10), year = parseInt(y, 10);
@@ -56,7 +57,7 @@ export default function Onboarding() {
     const today = daysIndex(new Date());
     const id = `p${Date.now()}`;
     const usage = recordCheck(s.ent, s.usage, today); // the first, free check
-    set({ onboarded: true, language: lang, focus, profiles: [{ id, name: name.trim(), day, month, year }], activeId: id,
+    set({ onboarded: true, language: lang, focus, onb, profiles: [{ id, name: name.trim(), day, month, year }], activeId: id,
       usage, notif: { daily, tips, time }, startDay: today, lastOpenDay: today });
     router.replace('/result');
   }
@@ -68,19 +69,13 @@ export default function Onboarding() {
       <View style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: F.serif, fontSize: 40, color: C.gold }}>9</Text></View>
       <H1>{L('welcome.title')}</H1><P>{L('welcome.body')}</P></View>
       {dots}<Button title={L('next')} onPress={next} /><Button kind="ghost" title={L('skip')} onPress={() => setStep(4)} /></Screen>);
-  if (step === 1) return (
-    <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}><Card><LoShuGridView counts={DEMO} /></Card><H1>{L('intro2.title')}</H1><P>{L('intro2.body')}</P></View>
-      {dots}<Button title={L('next')} onPress={next} /><Button kind="ghost" title={L('skip')} onPress={() => setStep(4)} /></Screen>);
-  if (step === 2) return (
-    <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}>
-      <Card><P muted={false}>{L('how.birth')}</P><P muted={false}>{L('how.destiny')}</P><P muted={false}>{L('how.name')}</P></Card>
-      <H1>{L('how.title')}</H1><P>{L('how.body')}</P></View>
-      {dots}<Button title={L('next')} onPress={next} /><Button kind="ghost" title={L('skip')} onPress={() => setStep(4)} /></Screen>);
-  if (step === 3) return (
-    <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}>
-      <Card><P muted={false}>{L('intro3.free')}</P><P muted={false}>{L('intro3.report')}</P><P muted={false}>{L('intro3.pro')}</P></Card>
-      <H1>{L('intro3.title')}</H1><P>{L('intro3.body')}</P></View>
-      {dots}<Button title={L('begin')} onPress={next} /></Screen>);
+  const ask = (key: 'goal' | 'exp' | 'plan', opts: [string, ReturnType<typeof L>][]) => (
+    <Screen><H1>{L(`q.${key}.title` as any)}</H1><P>{L(`q.${key}.body` as any)}</P>
+      <View style={{ gap: 10 }}>{opts.map(([id, label]) => <Chip key={id} label={label} on={onb[key] === id} onPress={() => { setOnb((x) => ({ ...x, [key]: id })); setTimeout(next, 200); }} />)}</View>
+      <View style={{ flex: 1 }} />{dots}<Button kind="ghost" title={L('skip')} onPress={next} /></Screen>);
+  if (step === 1) return ask('goal', [['career', L('q.goal.career')], ['love', L('q.goal.love')], ['money', L('q.goal.money')], ['name', L('q.goal.name')], ['curious', L('q.goal.curious')]]);
+  if (step === 2) return ask('exp', [['never', L('q.exp.never')], ['some', L('q.exp.some')], ['regular', L('q.exp.regular')]]);
+  if (step === 3) return ask('plan', [['yes', L('q.plan.yes')], ['maybe', L('q.plan.maybe')], ['no', L('q.plan.no')]]);
   if (step === 4) return (
     <Screen><H1>{L('name.title')}</H1><P>{L('name.body')}</P>
       <Field label={L('name.field')} value={name} onChangeText={setName} autoCapitalize="words" autoComplete="name" textContentType="name" returnKeyType="next" />
@@ -97,7 +92,7 @@ export default function Onboarding() {
   if (step === 6) return (
     <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}><Card><LoShuGridView counts={loShuGrid(day, month, year)} /></Card>
       <H1>{L('preview.title')}</H1>
-      <P muted={false}>{t(lang, 'preview.body', { birth: mulank(day), destiny: bhagyank(day, month, year) })}</P><P size={12}>{L('preview.note')}</P></View>
+      <P muted={false}>{t(lang, 'preview.body', { birth: mulank(day), destiny: bhagyank(day, month, year) })}</P>{onb.goal ? <P muted={false}>{t(lang, 'preview.goal', { goal: L(`q.goal.${onb.goal}` as any) })}</P> : null}{onb.plan === 'yes' ? <P muted={false}>{L('preview.plan')}</P> : null}<P size={12}>{L('preview.note')}</P></View>
       {dots}<Button title={L('continue')} onPress={next} /></Screen>);
   if (step === 7) return (
     <Screen><H1>{L('lang.title')}</H1><P>{L('lang.body')}</P>

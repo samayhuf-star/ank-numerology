@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Platform, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Localization from 'expo-localization';
-import { Button, Card, Chip, Field, H1, P, Screen } from '../components/ui';
-import { LoShuGridView } from '../components/ui';
+import { Button, Card, Chip, DateTimePickerModal, Field, H1, LoShuGridView, P, PickerField, Screen } from '../components/ui';
 import { useStore } from '../store';
 import { t } from '../i18n';
 import { LANGUAGES } from '../i18n/languages';
@@ -17,8 +16,17 @@ import { setPushConsent } from '../services/push';
 import { C, F } from '../theme';
 
 const FOCUS = ['Career', 'Money', 'Relationships', 'Name change', 'Daily guidance', 'Lucky numbers', 'Business name'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DOB_MIN = new Date(1900, 0, 1);
+const DOB_DEFAULT = new Date(1990, 0, 1);
 /** Number of onboarding screens (read by the autopilot panel). */
 export const ONBOARDING_SCREENS = 10;
+
+function pad2(n: number) { return String(n).padStart(2, '0'); }
+function dateFromTime(hhmm: string) {
+  const [h, mi] = hhmm.split(':').map((x) => parseInt(x, 10));
+  return new Date(1990, 0, 1, Number.isFinite(h) ? h : 8, Number.isFinite(mi) ? mi : 0, 0, 0);
+}
 
 const DEMO = { 1: 1, 2: 1, 3: 1, 7: 1, 9: 2 } as Record<number, number>;
 
@@ -33,6 +41,8 @@ export default function Onboarding() {
   const [daily, setDaily] = useState(true);
   const [tips, setTips] = useState<'unset' | 'yes' | 'no'>('unset');
   const [time, setTime] = useState('08:00');
+  const [showDob, setShowDob] = useState(false);
+  const [showTime, setShowTime] = useState(false);
   const L = (k: Parameters<typeof t>[1]) => t(lang, k);
 
   const day = parseInt(d, 10), month = parseInt(m, 10), year = parseInt(y, 10);
@@ -76,15 +86,27 @@ export default function Onboarding() {
     <Screen><H1>{L('name.title')}</H1><P>{L('name.body')}</P>
       <Field label={L('name.field')} value={name} onChangeText={setName} autoCapitalize="words" autoComplete="name" textContentType="name" returnKeyType="next" />
       <P size={12}>{L('name.hint')}</P><View style={{ flex: 1 }} /><Button title={L('continue')} disabled={!nameOk} onPress={next} /></Screen>);
-  if (step === 5) return (
-    <Screen><H1>{L('dob.title')}</H1><P>{L('dob.body')}</P>
+  if (step === 5) {
+    const dobFields = (
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1 }}><Field label={L('dob.day')} value={d} onChangeText={(v) => setD(v.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" maxLength={2} /></View>
         <View style={{ flex: 1 }}><Field label={L('dob.month')} value={m} onChangeText={(v) => setM(v.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" maxLength={2} /></View>
         <View style={{ flex: 1.4 }}><Field label={L('dob.year')} value={y} onChangeText={(v) => setY(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" maxLength={4} /></View>
       </View>
+    );
+    const applyDob = (dt: Date) => { setD(String(dt.getDate())); setM(String(dt.getMonth() + 1)); setY(String(dt.getFullYear())); };
+    return (
+    <Screen><H1>{L('dob.title')}</H1><P>{L('dob.body')}</P>
+      {Platform.OS === 'web' ? dobFields : (
+        <>
+          <PickerField label={L('dob.select')} value={dateOk ? `${day} ${MONTHS[month - 1]} ${year}` : ''} placeholder={L('dob.select')} onPress={() => setShowDob(true)} />
+          <DateTimePickerModal visible={showDob} mode="date" value={dateOk ? new Date(year, month - 1, day) : DOB_DEFAULT}
+            minimumDate={DOB_MIN} maximumDate={new Date()} onSelect={applyDob} onClose={() => setShowDob(false)} />
+        </>
+      )}
       {d && m && y.length === 4 && !dateOk ? <Text accessibilityRole="alert" style={{ color: C.warn, fontFamily: F.sans }}>{L('dob.error')}</Text> : null}
       <View style={{ flex: 1 }} /><Button title={L('continue')} disabled={!dateOk} onPress={next} /></Screen>);
+  }
   if (step === 6) return (
     <Screen><View style={{ flex: 1, justifyContent: 'center', gap: 16 }}><Card><LoShuGridView counts={loShuGrid(day, month, year)} /></Card>
       <H1>{L('preview.title')}</H1>
@@ -105,6 +127,14 @@ export default function Onboarding() {
         <Switch accessibilityLabel={L('alerts.daily')} value={daily} onValueChange={setDaily} trackColor={{ true: C.gold, false: C.border }} /></View></Card>
       <Card><Text style={{ fontFamily: F.sansSemi, color: C.text, fontSize: 16 }}>{L('alerts.tips')}</Text><P size={13}>{L('alerts.tipsBody')}</P>
         <View style={{ flexDirection: 'row', gap: 8 }}><Chip label={L('alerts.yes')} on={tips === 'yes'} onPress={() => setTips('yes')} /><Chip label={L('alerts.no')} on={tips === 'no'} onPress={() => setTips('no')} /></View></Card>
-      <Field label={`${L('alerts.time')} (24h, HH:MM)`} value={time} onChangeText={setTime} keyboardType="numbers-and-punctuation" maxLength={5} />
+      {Platform.OS === 'web' ? (
+        <Field label={`${L('alerts.time')} (24h, HH:MM)`} value={time} onChangeText={setTime} keyboardType="numbers-and-punctuation" maxLength={5} />
+      ) : (
+        <>
+          <PickerField label={L('alerts.time')} value={time} onPress={() => setShowTime(true)} />
+          <DateTimePickerModal visible={showTime} mode="time" value={dateFromTime(time)}
+            onSelect={(dt) => setTime(`${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`)} onClose={() => setShowTime(false)} />
+        </>
+      )}
       <View style={{ flex: 1 }} /><Button title={L('continue')} disabled={!timeOk || tips === 'unset'} onPress={finish} /></Screen>);
 }

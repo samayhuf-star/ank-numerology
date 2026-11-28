@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ank Numerology",
     "slug": "ank-numerology",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -57,7 +57,8 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 160
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "ank",
     "backgroundColor": "#12142B",

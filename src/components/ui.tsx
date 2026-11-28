@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, ViewStyle, TextInput, TextInputProps } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, ViewStyle, TextInput, TextInputProps } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { C, F } from '../theme';
 
@@ -42,6 +43,49 @@ export function Field({ label, ...rest }: { label: string } & TextInputProps) {
       <TextInput accessibilityLabel={label} placeholderTextColor={C.border} {...rest}
         style={{ height: 52, borderRadius: 14, borderWidth: 1, borderColor: C.border, backgroundColor: C.card, color: C.text, fontSize: 17, paddingHorizontal: 16, fontFamily: F.sans }} />
     </View>
+  );
+}
+export function PickerField({ label, value, placeholder, onPress }: { label: string; value: string; placeholder?: string; onPress: () => void }) {
+  const empty = !value;
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={{ fontFamily: F.sansSemi, fontSize: 13, color: C.muted }}>{label}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
+        style={{ height: 52, borderRadius: 14, borderWidth: 1, borderColor: C.border, backgroundColor: C.card, justifyContent: 'center', paddingHorizontal: 16 }}>
+        <Text style={{ fontSize: 17, fontFamily: F.sans, color: empty ? C.border : C.text }}>{empty ? (placeholder ?? '') : value}</Text>
+      </Pressable>
+    </View>
+  );
+}
+export function DateTimePickerModal({
+  visible, mode, value, onSelect, onClose, minimumDate, maximumDate, doneLabel = 'Done',
+}: {
+  visible: boolean; mode: 'date' | 'time'; value: Date; onSelect: (date: Date) => void; onClose: () => void;
+  minimumDate?: Date; maximumDate?: Date; doneLabel?: string;
+}) {
+  if (Platform.OS === 'web' || !visible) return null;
+  function handleChange(event: DateTimePickerEvent, date?: Date) {
+    if (Platform.OS === 'android') onClose();
+    if (event.type === 'set' && date) onSelect(date);
+  }
+  const picker = (
+    <DateTimePicker value={value} mode={mode} display={Platform.OS === 'ios' ? 'spinner' : 'default'} is24Hour
+      themeVariant="dark" textColor={C.text} onChange={handleChange} minimumDate={minimumDate} maximumDate={maximumDate} />
+  );
+  if (Platform.OS !== 'ios') return picker;
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(18,20,43,0.72)' }} onPress={onClose}>
+        <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: C.card, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 24 }}>
+          <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 12 }}>
+            <Pressable accessibilityRole="button" accessibilityLabel={doneLabel} onPress={() => { onSelect(value); onClose(); }} style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Text style={{ fontFamily: F.sansSemi, fontSize: 17, color: C.gold }}>{doneLabel}</Text>
+            </Pressable>
+          </View>
+          {picker}
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 export function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
